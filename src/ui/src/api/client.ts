@@ -37,6 +37,10 @@ function buildHeaders(options: RequestInit): HeadersInit | undefined {
   return { 'Content-Type': 'application/json', ...options.headers }
 }
 
+export function isApiError(error: unknown, status: number): boolean {
+  return error instanceof ApiError && error.status === status
+}
+
 async function readBody(response: Response): Promise<unknown> {
   if (response.status === 204) {
     return null
