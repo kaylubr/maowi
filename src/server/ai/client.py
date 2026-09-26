@@ -6,7 +6,7 @@ from google.genai import types
 
 from server.config import settings
 
-MODEL = "gemini-2.5-flash-lite"
+MODEL = "gemini-3.5-flash-lite"
 
 
 @lru_cache
