@@ -51,13 +51,27 @@ export function ModuleCard({
 
       <div className="flex flex-wrap gap-2">
         {isDraft && onGenerate ? (
-          <Button onClick={() => onGenerate(module)}>Generate</Button>
+          <Button
+            aria-label={`Generate questions for ${module.name}`}
+            onClick={() => onGenerate(module)}
+          >
+            Generate
+          </Button>
         ) : null}
         {isReady && onStudy ? (
-          <Button onClick={() => onStudy(module)}>Study</Button>
+          <Button
+            aria-label={`Study ${module.name}`}
+            onClick={() => onStudy(module)}
+          >
+            Study
+          </Button>
         ) : null}
         {onMerge ? (
-          <Button variant="ghost" onClick={() => onMerge(module)}>
+          <Button
+            variant="ghost"
+            aria-label={`Merge ${module.name}`}
+            onClick={() => onMerge(module)}
+          >
             Merge
           </Button>
         ) : null}
