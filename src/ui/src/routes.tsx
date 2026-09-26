@@ -3,6 +3,7 @@ import type { RouteObject } from 'react-router-dom'
 import { ProtectedRoute } from './components/layout/ProtectedRoute'
 import { DashboardPage } from './pages/DashboardPage'
 import { FlashcardPage } from './pages/FlashcardPage'
+import { IdentificationPage } from './pages/IdentificationPage'
 import { LandingPage } from './pages/LandingPage'
 import { LoginPage } from './pages/LoginPage'
 import { McqPage } from './pages/McqPage'
@@ -25,7 +26,7 @@ export const routes: RouteObject[] = [
       },
       {
         path: '/modules/:id/identification',
-        element: <div className="p-10 text-center text-white">Identification</div>,
+        element: <IdentificationPage />,
       },
       {
         path: '/modules/:id/flashcard',
