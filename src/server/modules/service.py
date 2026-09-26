@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from server.files.models import File
 from server.modules.models import Module, ModuleStatus
+from server.questions.models import Question
 
 
 def as_int(value: object) -> int | None:
@@ -44,6 +45,11 @@ def rename_module(db: Session, module: Module, name: str) -> Module:
 def merge_modules(db: Session, source: Module, target: Module) -> Module:
     db.execute(
         update(File).where(File.module_id == source.id).values(module_id=target.id)
+    )
+    db.execute(
+        update(Question)
+        .where(Question.module_id == source.id)
+        .values(module_id=target.id)
     )
     db.delete(source)
     db.commit()

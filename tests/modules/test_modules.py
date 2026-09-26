@@ -1,9 +1,18 @@
 from fastapi.testclient import TestClient
+from sqlalchemy import select
 
 from server.files.models import File
 from server.modules import service as modules_service
 from server.modules.models import Module
+from server.questions import service as questions_service
+from server.questions.models import Question
 from tests.files.fixtures import build_docx
+
+GENERATED_QUESTION = {
+    "prompt": "What is the capital of Australia?",
+    "answer": "Canberra",
+    "distractors": ["Sydney", "Melbourne", "Perth"],
+}
 
 EMAIL = "student@example.com"
 PASSWORD = "correct-horse-battery"
@@ -184,6 +193,25 @@ def test_merge_moves_files_and_deletes_source(client, db_session, session_factor
     with session_factory() as fresh_session:
         assert fresh_session.get(File, file_id).module_id == target.id
         assert fresh_session.get(Module, source.id) is None
+
+
+def test_merge_moves_questions(client, db_session, session_factory):
+    user_id = authenticate(client)
+    source = modules_service.create_module(db_session, user_id, "Source")
+    target = modules_service.create_module(db_session, user_id, "Target")
+    questions_service.create_questions(db_session, source, [GENERATED_QUESTION])
+
+    response = client.post(
+        f"/api/modules/{source.id}/merge", json={"target_module_id": target.id}
+    )
+
+    assert response.status_code == 200
+    with session_factory() as fresh_session:
+        moved = fresh_session.scalars(
+            select(Question).where(Question.module_id == target.id)
+        ).all()
+        assert len(moved) == 1
+        assert moved[0].answer == "Canberra"
 
 
 def test_merge_rejects_self_target(client, db_session):

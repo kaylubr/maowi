@@ -61,8 +61,10 @@ def use_test_database(monkeypatch, session_factory):
 @pytest.fixture(autouse=True)
 def stub_ai(monkeypatch):
     from server.modules import clustering
+    from server.questions import generation
 
     monkeypatch.setattr(clustering, "generate_json", lambda prompt: {})
+    monkeypatch.setattr(generation, "generate_json", lambda prompt: {})
 
 
 @pytest.fixture(autouse=True)
