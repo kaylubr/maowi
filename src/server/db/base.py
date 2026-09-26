@@ -5,4 +5,5 @@ class Base(DeclarativeBase):
     pass
 
 
+import server.files.models
 import server.users.models

@@ -30,6 +30,10 @@ build-backend = "uv_build"
 module-root = "src"
 module-name = "server"
 
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
 [dependency-groups]
 dev = [
     "httpx>=0.28.1",

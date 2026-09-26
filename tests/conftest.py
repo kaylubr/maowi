@@ -6,6 +6,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import NullPool
 
 from server.config import settings
+from server.db import session as db_session_module
 from server.db.base import Base
 from server.db.session import get_db
 from server.main import app
@@ -50,6 +51,11 @@ def engine():
 @pytest.fixture
 def session_factory(engine):
     return sessionmaker(bind=engine, autoflush=False, autocommit=False)
+
+
+@pytest.fixture(autouse=True)
+def use_test_database(monkeypatch, session_factory):
+    monkeypatch.setattr(db_session_module, "SessionLocal", session_factory)
 
 
 @pytest.fixture(autouse=True)
