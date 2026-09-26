@@ -2,6 +2,7 @@ import type { RouteObject } from 'react-router-dom'
 
 import { ProtectedRoute } from './components/layout/ProtectedRoute'
 import { DashboardPage } from './pages/DashboardPage'
+import { FlashcardPage } from './pages/FlashcardPage'
 import { LandingPage } from './pages/LandingPage'
 import { LoginPage } from './pages/LoginPage'
 import { RegisterPage } from './pages/RegisterPage'
@@ -27,7 +28,7 @@ export const routes: RouteObject[] = [
       },
       {
         path: '/modules/:id/flashcard',
-        element: <div className="p-10 text-center text-white">Flashcard</div>,
+        element: <FlashcardPage />,
       },
     ],
   },
