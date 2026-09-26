@@ -16,6 +16,11 @@ const UNAUTHENTICATED = {
   body: { detail: 'Not authenticated' },
 }
 
+const DASHBOARD_STUBS = [
+  { path: '/api/modules', body: [] },
+  { path: '/api/files', body: [] },
+]
+
 afterEach(() => {
   vi.unstubAllGlobals()
 })
@@ -30,11 +35,11 @@ describe('protected routes', () => {
   })
 
   it('renders protected content and the navbar for a valid session', async () => {
-    stubApi([{ path: '/api/users/me', body: USER }])
+    stubApi([{ path: '/api/users/me', body: USER }, ...DASHBOARD_STUBS])
 
     renderApp('/dashboard')
 
-    expect(await screen.findByText('Dashboard')).toBeInTheDocument()
+    expect(await screen.findByText('Your modules')).toBeInTheDocument()
     expect(screen.getByText(USER.email)).toBeInTheDocument()
   })
 
@@ -61,6 +66,7 @@ describe('login', () => {
 
     api.replace([
       { path: '/api/users/me', body: USER },
+      ...DASHBOARD_STUBS,
       { method: 'POST', path: '/api/auth/login', body: USER },
     ])
     await user.click(screen.getByRole('button', { name: 'Log in' }))
@@ -104,6 +110,7 @@ describe('register', () => {
 
     api.replace([
       { path: '/api/users/me', body: USER },
+      ...DASHBOARD_STUBS,
       { method: 'POST', path: '/api/auth/register', status: 201, body: USER },
       { method: 'POST', path: '/api/auth/login', body: USER },
     ])
@@ -118,10 +125,13 @@ describe('register', () => {
 describe('logout', () => {
   it('asks for confirmation before ending the session', async () => {
     const user = userEvent.setup()
-    const api = stubApi([{ path: '/api/users/me', body: USER }])
+    const api = stubApi([
+      { path: '/api/users/me', body: USER },
+      ...DASHBOARD_STUBS,
+    ])
     const { router } = renderApp('/dashboard')
 
-    await screen.findByText('Dashboard')
+    await screen.findByText('Your modules')
     await user.click(screen.getByRole('button', { name: 'Log out' }))
 
     expect(await screen.findByRole('dialog', { name: 'Log out' })).toBeInTheDocument()
@@ -139,10 +149,13 @@ describe('logout', () => {
 
   it('keeps the session when the confirmation is cancelled', async () => {
     const user = userEvent.setup()
-    const api = stubApi([{ path: '/api/users/me', body: USER }])
+    const api = stubApi([
+      { path: '/api/users/me', body: USER },
+      ...DASHBOARD_STUBS,
+    ])
     renderApp('/dashboard')
 
-    await screen.findByText('Dashboard')
+    await screen.findByText('Your modules')
     await user.click(screen.getByRole('button', { name: 'Log out' }))
     await user.click(screen.getByRole('button', { name: 'Cancel' }))
 

@@ -13,6 +13,12 @@ export type StubResponse = {
   body?: unknown
 }
 
+export type RecordedRequest = {
+  method: string
+  path: string
+  body: unknown
+}
+
 export function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
     status,
@@ -23,11 +29,13 @@ export function jsonResponse(body: unknown, status = 200): Response {
 export function stubApi(responses: StubResponse[]) {
   const stubs = [...responses]
   const calls: string[] = []
+  const requests: RecordedRequest[] = []
 
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const path = String(input).slice(config.apiBaseUrl.length)
     const method = (init?.method ?? 'GET').toUpperCase()
     calls.push(`${method} ${path}`)
+    requests.push({ method, path, body: init?.body })
 
     const match = stubs.find(
       (stub) => stub.path === path && (stub.method ?? 'GET').toUpperCase() === method,
@@ -48,6 +56,7 @@ export function stubApi(responses: StubResponse[]) {
   return {
     fetchMock,
     calls,
+    requests,
     replace(next: StubResponse[]) {
       stubs.splice(0, stubs.length, ...next)
     },

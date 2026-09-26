@@ -1,6 +1,7 @@
 import type { RouteObject } from 'react-router-dom'
 
 import { ProtectedRoute } from './components/layout/ProtectedRoute'
+import { DashboardPage } from './pages/DashboardPage'
 import { LandingPage } from './pages/LandingPage'
 import { LoginPage } from './pages/LoginPage'
 import { RegisterPage } from './pages/RegisterPage'
@@ -14,7 +15,7 @@ export const routes: RouteObject[] = [
     children: [
       {
         path: '/dashboard',
-        element: <div className="p-10 text-center text-white">Dashboard</div>,
+        element: <DashboardPage />,
       },
       {
         path: '/modules/:id/mcq',
