@@ -9,6 +9,10 @@ from server.questions.models import Question
 from server.questions.schemas import QuestionMode
 
 
+def get_question(db: Session, question_id: int) -> Question | None:
+    return db.get(Question, question_id)
+
+
 def list_module_questions(
     db: Session,
     module_id: int,

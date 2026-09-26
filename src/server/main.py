@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from server.attempts.router import router as attempts_router
 from server.auth.router import router as auth_router
 from server.config import settings
 from server.files.router import router as files_router
@@ -23,3 +24,4 @@ app.include_router(users_router)
 app.include_router(files_router)
 app.include_router(modules_router)
 app.include_router(questions_router)
+app.include_router(attempts_router)
