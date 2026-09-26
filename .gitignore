@@ -16,4 +16,4 @@ wheels/
 .commandcode/
 
 # Node
-node_modules/
+node_modules
