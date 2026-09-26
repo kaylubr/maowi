@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 
+import { parseCountParam } from '../api/questions'
 import { Button } from '../components/ui/Button'
 import { GlassCard } from '../components/ui/GlassCard'
 import { useFlashcardQuestions } from '../hooks/useQuestions'
@@ -9,7 +10,7 @@ export function FlashcardPage() {
   const { id } = useParams()
   const [searchParams] = useSearchParams()
   const moduleId = Number(id)
-  const count = parseCount(searchParams.get('count'))
+  const count = parseCountParam(searchParams.get('count'))
 
   const questionsQuery = useFlashcardQuestions(moduleId, count)
   const questions = questionsQuery.data ?? []
@@ -96,12 +97,4 @@ export function FlashcardPage() {
       </GlassCard>
     </div>
   )
-}
-
-function parseCount(value: string | null): number | undefined {
-  if (value === null) {
-    return undefined
-  }
-  const parsed = Number(value)
-  return Number.isInteger(parsed) && parsed > 0 ? parsed : undefined
 }

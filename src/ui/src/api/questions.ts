@@ -31,6 +31,15 @@ function requestQuestions<T>(
   return apiFetch<T[]>(`/api/modules/${moduleId}/questions?${params}`)
 }
 
+export function parseCountParam(value: string | null): number | undefined {
+  if (value === null) {
+    return undefined
+  }
+
+  const parsed = Number(value)
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : undefined
+}
+
 export function listFlashcardQuestions(
   moduleId: number,
   count?: number,

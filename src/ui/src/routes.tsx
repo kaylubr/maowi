@@ -5,6 +5,7 @@ import { DashboardPage } from './pages/DashboardPage'
 import { FlashcardPage } from './pages/FlashcardPage'
 import { LandingPage } from './pages/LandingPage'
 import { LoginPage } from './pages/LoginPage'
+import { McqPage } from './pages/McqPage'
 import { RegisterPage } from './pages/RegisterPage'
 
 export const routes: RouteObject[] = [
@@ -20,7 +21,7 @@ export const routes: RouteObject[] = [
       },
       {
         path: '/modules/:id/mcq',
-        element: <div className="p-10 text-center text-white">MCQ</div>,
+        element: <McqPage />,
       },
       {
         path: '/modules/:id/identification',
