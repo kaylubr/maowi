@@ -1,6 +1,6 @@
 from enum import StrEnum
 
-from sqlalchemy import ForeignKey, Integer, String, Text
+from sqlalchemy import ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from server.db.base import Base
@@ -20,7 +20,9 @@ class File(Base):
     user_id: Mapped[int] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"), index=True
     )
-    module_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
+    module_id: Mapped[int | None] = mapped_column(
+        ForeignKey("modules.id", ondelete="SET NULL"), nullable=True, index=True
+    )
     filename: Mapped[str] = mapped_column(String(512))
     file_type: Mapped[str] = mapped_column(String(16))
     parsed_text: Mapped[str | None] = mapped_column(Text, nullable=True)

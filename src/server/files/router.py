@@ -16,6 +16,8 @@ from server.files import models, service
 from server.files.parsing import UnsupportedFileTypeError, file_type_from_filename
 from server.files.schemas import FileRead, FileStatusRead, FileUpdate
 from server.files.tasks import parse_file
+from server.modules import service as modules_service
+from server.modules.tasks import assign_files_to_modules
 from server.users.models import User
 
 router = APIRouter(prefix="/api/files", tags=["files"])
@@ -66,6 +68,12 @@ def upload_files(
     for file, (_, _, content) in zip(files, prepared):
         background_tasks.add_task(parse_file, file.id, content)
 
+    background_tasks.add_task(
+        assign_files_to_modules,
+        current_user.id,
+        [file.id for file in files],
+    )
+
     return files
 
 
@@ -86,4 +94,15 @@ def update_file(
     db: Session = Depends(get_db),
 ) -> models.File:
     file = get_owned_file(db, current_user.id, file_id)
+
+    if payload.module_id is not None:
+        module = modules_service.get_user_module(
+            db, current_user.id, payload.module_id
+        )
+        if module is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Module not found",
+            )
+
     return service.set_file_module(db, file, payload.module_id)

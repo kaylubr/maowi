@@ -1,15 +1,17 @@
 from fastapi.testclient import TestClient
 
 from server.files.models import File
+from server.modules import service as modules_service
 from tests.files.fixtures import build_docx, build_pdf, build_pptx
 
 EMAIL = "student@example.com"
 PASSWORD = "correct-horse-battery"
 
 
-def authenticate(client: TestClient, email: str = EMAIL) -> None:
+def authenticate(client: TestClient, email: str = EMAIL) -> int:
     client.post("/api/auth/register", json={"email": email, "password": PASSWORD})
     client.post("/api/auth/login", json={"email": email, "password": PASSWORD})
+    return client.get("/api/users/me").json()["id"]
 
 
 def upload(client: TestClient, files: list[tuple[str, bytes]]):
@@ -125,24 +127,53 @@ def test_status_hides_other_users_files(client):
     assert response.status_code == 404
 
 
-def test_patch_reassigns_module(client):
-    authenticate(client)
+def test_patch_reassigns_module(client, db_session):
+    user_id = authenticate(client)
+    module = modules_service.create_module(db_session, user_id, "Cell Biology")
     created = upload(client, [("notes.docx", build_docx("text"))]).json()
 
-    response = client.patch(f"/api/files/{created[0]['id']}", json={"module_id": 7})
+    response = client.patch(
+        f"/api/files/{created[0]['id']}", json={"module_id": module.id}
+    )
 
     assert response.status_code == 200
-    assert response.json()["module_id"] == 7
+    assert response.json()["module_id"] == module.id
 
 
-def test_patch_can_clear_module(client):
-    authenticate(client)
+def test_patch_can_clear_module(client, db_session):
+    user_id = authenticate(client)
+    module = modules_service.create_module(db_session, user_id, "Cell Biology")
     created = upload(client, [("notes.docx", build_docx("text"))]).json()
-    client.patch(f"/api/files/{created[0]['id']}", json={"module_id": 7})
+    client.patch(f"/api/files/{created[0]['id']}", json={"module_id": module.id})
 
     response = client.patch(f"/api/files/{created[0]['id']}", json={"module_id": None})
 
     assert response.json()["module_id"] is None
+
+
+def test_patch_rejects_unknown_module(client):
+    authenticate(client)
+    created = upload(client, [("notes.docx", build_docx("text"))]).json()
+
+    response = client.patch(
+        f"/api/files/{created[0]['id']}", json={"module_id": 9999}
+    )
+
+    assert response.status_code == 404
+
+
+def test_patch_rejects_other_users_module(client, db_session):
+    owner_id = authenticate(client, "owner@example.com")
+    module = modules_service.create_module(db_session, owner_id, "Owner Module")
+    created = upload(client, [("notes.docx", build_docx("text"))]).json()
+    client.cookies.clear()
+    authenticate(client, "intruder@example.com")
+
+    response = client.patch(
+        f"/api/files/{created[0]['id']}", json={"module_id": module.id}
+    )
+
+    assert response.status_code == 404
 
 
 def test_patch_hides_other_users_files(client):

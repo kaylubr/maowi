@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from server.auth.router import router as auth_router
 from server.config import settings
 from server.files.router import router as files_router
+from server.modules.router import router as modules_router
 from server.users.router import router as users_router
 
 app = FastAPI(title="Maowi API")
@@ -19,3 +20,4 @@ app.add_middleware(
 app.include_router(auth_router)
 app.include_router(users_router)
 app.include_router(files_router)
+app.include_router(modules_router)

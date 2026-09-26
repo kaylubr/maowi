@@ -59,6 +59,13 @@ def use_test_database(monkeypatch, session_factory):
 
 
 @pytest.fixture(autouse=True)
+def stub_ai(monkeypatch):
+    from server.modules import clustering
+
+    monkeypatch.setattr(clustering, "generate_json", lambda prompt: {})
+
+
+@pytest.fixture(autouse=True)
 def reset_database(engine):
     yield
     table_names = ", ".join(table.name for table in Base.metadata.sorted_tables)
