@@ -1,0 +1,14 @@
+services:
+  db:
+    image: postgres:latest
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: studyapp
+      POSTGRES_PASSWORD: studyapp
+      POSTGRES_DB: studyapp
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+volumes:
+  pgdata:
