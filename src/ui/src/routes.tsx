@@ -1,11 +1,12 @@
 import type { RouteObject } from 'react-router-dom'
 
 import { ProtectedRoute } from './components/layout/ProtectedRoute'
+import { LandingPage } from './pages/LandingPage'
 import { LoginPage } from './pages/LoginPage'
 import { RegisterPage } from './pages/RegisterPage'
 
 export const routes: RouteObject[] = [
-  { path: '/', element: <div className="p-10 text-center text-white">Landing</div> },
+  { path: '/', element: <LandingPage /> },
   { path: '/login', element: <LoginPage /> },
   { path: '/register', element: <RegisterPage /> },
   {
