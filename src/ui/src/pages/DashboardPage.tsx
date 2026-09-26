@@ -4,6 +4,7 @@ import type { UploadedFile } from '../api/files'
 import type { StudyModule } from '../api/modules'
 import { CreateModuleModal } from '../components/modules/CreateModuleModal'
 import { ModuleCard } from '../components/modules/ModuleCard'
+import { StudyModeModal } from '../components/modules/StudyModeModal'
 import { UploadFilesModal } from '../components/modules/UploadFilesModal'
 import { Button } from '../components/ui/Button'
 import { ConfirmModal } from '../components/ui/ConfirmModal'
@@ -34,6 +35,7 @@ export function DashboardPage() {
 
   const [showUpload, setShowUpload] = useState(false)
   const [showCreateModule, setShowCreateModule] = useState(false)
+  const [studyModule, setStudyModule] = useState<StudyModule | null>(null)
   const [mergeSource, setMergeSource] = useState<StudyModule | null>(null)
   const [mergeTargetId, setMergeTargetId] = useState('')
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null)
@@ -132,6 +134,7 @@ export function DashboardPage() {
             onGenerate={(target) =>
               setPendingAction({ kind: 'generate', module: target })
             }
+            onStudy={setStudyModule}
             onMerge={startMerge}
           />
         ))}
@@ -243,6 +246,7 @@ export function DashboardPage() {
         open={showCreateModule}
         onClose={() => setShowCreateModule(false)}
       />
+      <StudyModeModal module={studyModule} onClose={() => setStudyModule(null)} />
     </div>
   )
 }
