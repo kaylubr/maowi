@@ -77,6 +77,14 @@ def upload_files(
     return files
 
 
+@router.get("", response_model=list[FileRead])
+def list_files(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> list[models.File]:
+    return service.list_user_files(db, current_user.id)
+
+
 @router.get("/{file_id}/status", response_model=FileStatusRead)
 def read_file_status(
     file_id: int,
@@ -84,6 +92,16 @@ def read_file_status(
     db: Session = Depends(get_db),
 ) -> models.File:
     return get_owned_file(db, current_user.id, file_id)
+
+
+@router.delete("/{file_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_file(
+    file_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> None:
+    file = get_owned_file(db, current_user.id, file_id)
+    service.delete_file(db, file)
 
 
 @router.patch("/{file_id}", response_model=FileRead)

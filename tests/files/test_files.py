@@ -127,6 +127,56 @@ def test_status_hides_other_users_files(client):
     assert response.status_code == 404
 
 
+def test_list_files_requires_authentication(client):
+    assert client.get("/api/files").status_code == 401
+
+
+def test_list_files_returns_uploaded_files(client):
+    authenticate(client)
+    upload(client, [("a.docx", build_docx("alpha")), ("b.docx", build_docx("beta"))])
+
+    body = client.get("/api/files").json()
+
+    assert [file["filename"] for file in body] == ["a.docx", "b.docx"]
+    assert [file["status"] for file in body] == ["parsed", "parsed"]
+
+
+def test_list_files_excludes_other_users_files(client):
+    authenticate(client, "owner@example.com")
+    upload(client, [("notes.docx", build_docx("text"))])
+    client.cookies.clear()
+    authenticate(client, "intruder@example.com")
+
+    assert client.get("/api/files").json() == []
+
+
+def test_delete_file_removes_it(client):
+    authenticate(client)
+    created = upload(client, [("notes.docx", build_docx("text"))]).json()
+
+    response = client.delete(f"/api/files/{created[0]['id']}")
+
+    assert response.status_code == 204
+    assert client.get("/api/files").json() == []
+
+
+def test_delete_hides_other_users_files(client):
+    authenticate(client, "owner@example.com")
+    created = upload(client, [("notes.docx", build_docx("text"))]).json()
+    client.cookies.clear()
+    authenticate(client, "intruder@example.com")
+
+    response = client.delete(f"/api/files/{created[0]['id']}")
+
+    assert response.status_code == 404
+
+
+def test_delete_unknown_file_is_not_found(client):
+    authenticate(client)
+
+    assert client.delete("/api/files/9999").status_code == 404
+
+
 def test_patch_reassigns_module(client, db_session):
     user_id = authenticate(client)
     module = modules_service.create_module(db_session, user_id, "Cell Biology")

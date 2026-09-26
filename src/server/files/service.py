@@ -31,6 +31,29 @@ def get_user_file(db: Session, user_id: int, file_id: int) -> File | None:
     )
 
 
+def list_user_files(db: Session, user_id: int) -> list[File]:
+    statement = select(File).where(File.user_id == user_id).order_by(File.id)
+    return list(db.scalars(statement))
+
+
+def get_user_files_by_ids(
+    db: Session,
+    user_id: int,
+    file_ids: list[int],
+) -> list[File]:
+    if not file_ids:
+        return []
+    statement = select(File).where(
+        File.id.in_(file_ids), File.user_id == user_id
+    )
+    return list(db.scalars(statement))
+
+
+def delete_file(db: Session, file: File) -> None:
+    db.delete(file)
+    db.commit()
+
+
 def set_file_module(db: Session, file: File, module_id: int | None) -> File:
     file.module_id = module_id
     db.commit()

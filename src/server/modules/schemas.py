@@ -24,5 +24,10 @@ class ModuleUpdate(BaseModel):
     name: str = Field(min_length=1, max_length=255)
 
 
+class ModuleCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=255)
+    file_ids: list[int] = Field(default_factory=list)
+
+
 class ModuleMergeRequest(BaseModel):
     target_module_id: int

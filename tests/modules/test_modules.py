@@ -136,6 +136,70 @@ def test_failed_parse_is_not_clustered(client, db_session, monkeypatch):
     assert db_session.get(File, created[0]["id"]).module_id is None
 
 
+def test_create_module_assigns_selected_files(client, db_session):
+    authenticate(client)
+    created = upload(
+        client,
+        [("a.docx", build_docx("alpha")), ("b.docx", build_docx("beta"))],
+    ).json()
+    file_ids = [entry["id"] for entry in created]
+
+    response = client.post(
+        "/api/modules", json={"name": "Cell Biology", "file_ids": file_ids}
+    )
+
+    assert response.status_code == 201
+    body = response.json()
+    assert body["name"] == "Cell Biology"
+    assert body["status"] == "draft"
+    assert [db_session.get(File, file_id).module_id for file_id in file_ids] == [
+        body["id"],
+        body["id"],
+    ]
+
+
+def test_create_module_without_files(client):
+    authenticate(client)
+
+    response = client.post("/api/modules", json={"name": "Empty Module"})
+
+    assert response.status_code == 201
+    assert response.json()["status"] == "draft"
+
+
+def test_create_module_rejects_unknown_file(client):
+    authenticate(client)
+
+    response = client.post("/api/modules", json={"name": "X", "file_ids": [9999]})
+
+    assert response.status_code == 404
+
+
+def test_create_module_rejects_other_users_file(client):
+    authenticate(client, "owner@example.com")
+    created = upload(client, [("a.docx", build_docx("alpha"))]).json()
+    client.cookies.clear()
+    authenticate(client, "intruder@example.com")
+
+    response = client.post(
+        "/api/modules", json={"name": "X", "file_ids": [created[0]["id"]]}
+    )
+
+    assert response.status_code == 404
+
+
+def test_create_module_rejects_blank_name(client):
+    authenticate(client)
+
+    assert client.post("/api/modules", json={"name": ""}).status_code == 422
+
+
+def test_create_module_requires_authentication(client):
+    client.cookies.clear()
+
+    assert client.post("/api/modules", json={"name": "X"}).status_code == 401
+
+
 def test_rename_module(client, db_session):
     user_id = authenticate(client)
     module = modules_service.create_module(db_session, user_id, "Old Name")

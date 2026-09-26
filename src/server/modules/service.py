@@ -42,6 +42,14 @@ def rename_module(db: Session, module: Module, name: str) -> Module:
     return module
 
 
+def assign_files_to_module(db: Session, files: list[File], module: Module) -> Module:
+    for file in files:
+        file.module_id = module.id
+    db.commit()
+    db.refresh(module)
+    return module
+
+
 def merge_modules(db: Session, source: Module, target: Module) -> Module:
     db.execute(
         update(File).where(File.module_id == source.id).values(module_id=target.id)

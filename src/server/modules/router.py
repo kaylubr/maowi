@@ -3,8 +3,10 @@ from sqlalchemy.orm import Session
 
 from server.auth.dependencies import get_current_user
 from server.db.session import get_db
+from server.files import service as files_service
 from server.modules import models, service
 from server.modules.schemas import (
+    ModuleCreate,
     ModuleMergeRequest,
     ModuleRead,
     ModuleStatusRead,
@@ -31,6 +33,23 @@ def list_modules(
     db: Session = Depends(get_db),
 ) -> list[models.Module]:
     return service.list_modules(db, current_user.id)
+
+
+@router.post("", response_model=ModuleRead, status_code=status.HTTP_201_CREATED)
+def create_module(
+    payload: ModuleCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> models.Module:
+    files = files_service.get_user_files_by_ids(db, current_user.id, payload.file_ids)
+    if len(files) != len(set(payload.file_ids)):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="File not found",
+        )
+
+    module = service.create_module(db, current_user.id, payload.name)
+    return service.assign_files_to_module(db, files, module)
 
 
 @router.patch("/{module_id}", response_model=ModuleRead)
