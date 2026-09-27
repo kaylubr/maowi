@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { FormEvent } from 'react'
+import type { SyntheticEvent } from "react";
 import { Link, Navigate } from 'react-router-dom'
 
 import { Button } from '../components/ui/Button'
@@ -16,10 +16,10 @@ export function LoginPage() {
     return <Navigate to="/dashboard" replace />
   }
 
-  const submit = (event: FormEvent) => {
-    event.preventDefault()
-    login.mutate({ email, password })
-  }
+  const submit = (event: SyntheticEvent) => {
+    event.preventDefault();
+    login.mutate({ email, password });
+  };
 
   return (
     <main className="container py-5">

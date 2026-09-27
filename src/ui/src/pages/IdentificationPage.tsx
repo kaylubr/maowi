@@ -1,7 +1,6 @@
 import { useState } from 'react'
-import type { FormEvent } from 'react'
+import type { SyntheticEvent } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
-
 import type { Attempt, AttemptAnswer } from '../api/attempts'
 import type { IdentificationQuestion } from '../api/questions'
 import { parseCountParam } from '../api/questions'
@@ -75,36 +74,38 @@ function IdentificationQuiz({
 
   const check = async (
     question: IdentificationQuestion,
-    event: FormEvent<HTMLFormElement>,
+    event: SyntheticEvent<HTMLFormElement>,
   ) => {
-    event.preventDefault()
+    event.preventDefault();
 
-    const draft = (drafts[question.id] ?? '').trim()
-    if (isComplete || answers[question.id] || draft === '') {
-      return
+    const draft = (drafts[question.id] ?? "").trim();
+    if (isComplete || answers[question.id] || draft === "") {
+      return;
     }
     if (pendingQuestionId !== null) {
-      return
+      return;
     }
 
-    setActionError(null)
-    setPendingQuestionId(question.id)
+    setActionError(null);
+    setPendingQuestionId(question.id);
 
     try {
       const answer = await submitAnswer.mutateAsync({
         attemptId: attempt.id,
         questionId: question.id,
         userAnswer: draft,
-      })
-      setAnswers((current) => ({ ...current, [question.id]: answer }))
+      });
+      setAnswers((current) => ({ ...current, [question.id]: answer }));
     } catch (error) {
       setActionError(
-        error instanceof Error ? error.message : 'That answer could not be saved.',
-      )
+        error instanceof Error
+          ? error.message
+          : "That answer could not be saved.",
+      );
     } finally {
-      setPendingQuestionId(null)
+      setPendingQuestionId(null);
     }
-  }
+  };
 
   const finish = async () => {
     setActionError(null)
@@ -212,19 +213,19 @@ function QuestionBlock({
   onDraft,
   onCheck,
 }: {
-  question: IdentificationQuestion
-  position: number
-  draft: string
-  result: AttemptAnswer | undefined
-  isComplete: boolean
-  isPending: boolean
-  onDraft: (value: string) => void
+  question: IdentificationQuestion;
+  position: number;
+  draft: string;
+  result: AttemptAnswer | undefined;
+  isComplete: boolean;
+  isPending: boolean;
+  onDraft: (value: string) => void;
   onCheck: (
     question: IdentificationQuestion,
-    event: FormEvent<HTMLFormElement>,
-  ) => void
+    event: SyntheticEvent<HTMLFormElement>,
+  ) => void;
 }) {
-  const isLocked = isComplete || result !== undefined
+  const isLocked = isComplete || result !== undefined;
 
   return (
     <div className="card mb-3">
@@ -248,9 +249,9 @@ function QuestionBlock({
           />
           <Button
             type="submit"
-            disabled={isLocked || isPending || draft.trim() === ''}
+            disabled={isLocked || isPending || draft.trim() === ""}
           >
-            {isPending ? 'Checking…' : `Check question ${position + 1}`}
+            {isPending ? "Checking…" : `Check question ${position + 1}`}
           </Button>
         </form>
 
@@ -258,10 +259,10 @@ function QuestionBlock({
           <p
             role="status"
             className={`mt-3 mb-0 small fw-semibold ${
-              result.is_correct ? 'text-success' : 'text-danger'
+              result.is_correct ? "text-success" : "text-danger"
             }`}
           >
-            {result.is_correct ? 'Correct' : 'Incorrect'}
+            {result.is_correct ? "Correct" : "Incorrect"}
           </p>
         ) : null}
 
@@ -270,5 +271,5 @@ function QuestionBlock({
         ) : null}
       </div>
     </div>
-  )
+  );
 }
