@@ -48,8 +48,7 @@ def create_module(
             detail="File not found",
         )
 
-    module = service.create_module(db, current_user.id, payload.name)
-    return service.assign_files_to_module(db, files, module)
+    return service.create_module(db, current_user.id, payload.name, files)
 
 
 @router.patch("/{module_id}", response_model=ModuleRead)

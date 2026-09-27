@@ -1,3 +1,4 @@
+import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import select
 
@@ -134,6 +135,41 @@ def test_failed_parse_is_not_clustered(client, db_session, monkeypatch):
 
     assert client.get("/api/modules").json() == []
     assert db_session.get(File, created[0]["id"]).module_id is None
+
+
+def test_assignment_failure_leaves_no_modules(
+    client, db_session, session_factory, monkeypatch
+):
+    user_id = authenticate(client)
+    created = upload(
+        client,
+        [("a.docx", build_docx("alpha")), ("b.docx", build_docx("beta"))],
+    ).json()
+    file_ids = [entry["id"] for entry in created]
+
+    original_add_module = modules_service.add_module
+    calls = {"count": 0}
+
+    def flaky_add_module(db, owner_id, name):
+        calls["count"] += 1
+        if calls["count"] == 2:
+            raise RuntimeError("assignment exploded")
+        return original_add_module(db, owner_id, name)
+
+    monkeypatch.setattr(modules_service, "add_module", flaky_add_module)
+
+    assignments = [
+        {"file_id": str(file_ids[0]), "new_module_name": "First"},
+        {"file_id": str(file_ids[1]), "new_module_name": "Second"},
+    ]
+
+    with pytest.raises(RuntimeError):
+        modules_service.apply_assignments(db_session, user_id, assignments)
+
+    db_session.rollback()
+
+    with session_factory() as fresh_session:
+        assert fresh_session.scalars(select(Module)).all() == []
 
 
 def test_create_module_assigns_selected_files(client, db_session):

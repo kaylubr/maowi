@@ -44,10 +44,11 @@ def generate_questions(
 ) -> Module:
     module = get_owned_module(db, current_user.id, module_id)
 
-    if module.status != ModuleStatus.draft:
+    can_generate = module.status in (ModuleStatus.draft, ModuleStatus.failed)
+    if not can_generate:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Questions can only be generated for a draft module",
+            detail="Questions can only be generated for a draft or failed module",
         )
 
     module.status = ModuleStatus.generating

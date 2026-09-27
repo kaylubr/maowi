@@ -219,3 +219,26 @@ def test_generate_hides_other_users_modules(client, db_session, monkeypatch):
     response = client.post(f"/api/modules/{owner_module.id}/generate")
 
     assert response.status_code == 404
+
+
+def test_generate_can_retry_a_failed_module(client, db_session, monkeypatch):
+    from server.questions import generation
+
+    def explode(prompt):
+        raise RuntimeError("gemini exploded")
+
+    monkeypatch.setattr(generation, "generate_json", explode)
+    user_id = authenticate(client)
+    module = modules_service.create_module(db_session, user_id, "Cell Biology")
+
+    client.post(f"/api/modules/{module.id}/generate")
+    assert client.get(f"/api/modules/{module.id}/status").json()["status"] == "failed"
+
+    stub_generation(monkeypatch)
+
+    response = client.post(f"/api/modules/{module.id}/generate")
+
+    assert response.status_code == 202
+    assert client.get(f"/api/modules/{module.id}/status").json()["status"] == "ready"
+    questions = client.get(f"/api/modules/{module.id}/questions?mode=flashcard").json()
+    assert len(questions) == 5

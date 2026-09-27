@@ -27,9 +27,24 @@ def get_user_module(db: Session, user_id: int, module_id: int) -> Module | None:
     return db.scalar(statement)
 
 
-def create_module(db: Session, user_id: int, name: str) -> Module:
+def add_module(db: Session, user_id: int, name: str) -> Module:
     module = Module(user_id=user_id, name=name, status=ModuleStatus.draft)
     db.add(module)
+    db.flush()
+    return module
+
+
+def create_module(
+    db: Session,
+    user_id: int,
+    name: str,
+    files: list[File] | None = None,
+) -> Module:
+    module = add_module(db, user_id, name)
+
+    for file in files or []:
+        file.module_id = module.id
+
     db.commit()
     db.refresh(module)
     return module
@@ -37,14 +52,6 @@ def create_module(db: Session, user_id: int, name: str) -> Module:
 
 def rename_module(db: Session, module: Module, name: str) -> Module:
     module.name = name
-    db.commit()
-    db.refresh(module)
-    return module
-
-
-def assign_files_to_module(db: Session, files: list[File], module: Module) -> Module:
-    for file in files:
-        file.module_id = module.id
     db.commit()
     db.refresh(module)
     return module
@@ -97,7 +104,7 @@ def apply_assignments(db: Session, user_id: int, assignments: list[dict]) -> Non
 
         module = modules_by_name.get(name)
         if module is None:
-            module = create_module(db, user_id, name)
+            module = add_module(db, user_id, name)
             modules_by_name[name] = module
 
         file.module_id = module.id

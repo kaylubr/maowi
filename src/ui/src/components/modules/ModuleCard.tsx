@@ -29,7 +29,11 @@ export function ModuleCard({
   onMerge,
 }: ModuleCardProps) {
   const isDraft = module.status === 'draft'
+  const isFailed = module.status === 'failed'
   const isReady = module.status === 'ready'
+  const canGenerate = isDraft || isFailed
+  const generateLabel = isFailed ? 'Retry' : 'Generate'
+  const generateAriaLabel = `${generateLabel} questions for ${module.name}`
 
   return (
     <div className="col">
@@ -50,13 +54,13 @@ export function ModuleCard({
         </div>
 
         <div className="card-footer bg-transparent d-flex flex-wrap gap-2">
-          {isDraft && onGenerate ? (
+          {canGenerate && onGenerate ? (
             <Button
               variant="secondary"
-              aria-label={`Generate questions for ${module.name}`}
+              aria-label={generateAriaLabel}
               onClick={() => onGenerate(module)}
             >
-              Generate
+              {generateLabel}
             </Button>
           ) : null}
           {isReady && onStudy ? (
