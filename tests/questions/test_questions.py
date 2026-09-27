@@ -242,3 +242,16 @@ def test_generate_can_retry_a_failed_module(client, db_session, monkeypatch):
     assert client.get(f"/api/modules/{module.id}/status").json()["status"] == "ready"
     questions = client.get(f"/api/modules/{module.id}/questions?mode=flashcard").json()
     assert len(questions) == 5
+
+
+def test_generate_task_ignores_a_deleted_module(client, db_session):
+    from server.questions.tasks import generate_module_questions
+
+    user_id = authenticate(client)
+    module = modules_service.create_module(db_session, user_id, "Cell Biology")
+    module_id = module.id
+    client.delete(f"/api/modules/{module_id}")
+
+    generate_module_questions(module_id)
+
+    assert client.get(f"/api/modules/{module_id}/status").status_code == 404

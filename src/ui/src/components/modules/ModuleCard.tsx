@@ -6,6 +6,7 @@ type ModuleCardProps = {
   onGenerate?: (module: StudyModule) => void
   onStudy?: (module: StudyModule) => void
   onMerge?: (module: StudyModule) => void
+  onDelete?: (module: StudyModule) => void
 }
 
 const STATUS_LABELS: Record<ModuleStatus, string> = {
@@ -27,6 +28,7 @@ export function ModuleCard({
   onGenerate,
   onStudy,
   onMerge,
+  onDelete,
 }: ModuleCardProps) {
   const isDraft = module.status === 'draft'
   const isFailed = module.status === 'failed'
@@ -78,6 +80,15 @@ export function ModuleCard({
               onClick={() => onMerge(module)}
             >
               Merge
+            </Button>
+          ) : null}
+          {onDelete ? (
+            <Button
+              variant="ghost"
+              aria-label={`Delete ${module.name}`}
+              onClick={() => onDelete(module)}
+            >
+              Delete
             </Button>
           ) : null}
         </div>

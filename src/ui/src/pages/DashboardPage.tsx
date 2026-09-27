@@ -12,6 +12,7 @@ import { Modal } from '../components/ui/Modal'
 import { ErrorText, Label } from '../components/ui/typography'
 import { useDeleteFile, useFiles } from '../hooks/useFiles'
 import {
+  useDeleteModule,
   useGenerateModuleQuestions,
   useMergeModules,
   useModules,
@@ -19,6 +20,7 @@ import {
 
 type PendingAction =
   | { kind: 'generate'; module: StudyModule }
+  | { kind: 'deleteModule'; module: StudyModule }
   | { kind: 'deleteFile'; file: UploadedFile }
   | { kind: 'merge'; source: StudyModule; target: StudyModule }
 
@@ -27,6 +29,7 @@ export function DashboardPage() {
   const filesQuery = useFiles()
 
   const deleteFile = useDeleteFile()
+  const deleteModule = useDeleteModule()
   const mergeModules = useMergeModules()
   const generateQuestions = useGenerateModuleQuestions()
 
@@ -71,6 +74,8 @@ export function DashboardPage() {
         await generateQuestions.mutateAsync(pendingAction.module.id)
       } else if (pendingAction.kind === 'deleteFile') {
         await deleteFile.mutateAsync(pendingAction.file.id)
+      } else if (pendingAction.kind === 'deleteModule') {
+        await deleteModule.mutateAsync(pendingAction.module.id)
       } else {
         await mergeModules.mutateAsync({
           moduleId: pendingAction.source.id,
@@ -126,6 +131,9 @@ export function DashboardPage() {
               }
               onStudy={setStudyModule}
               onMerge={startMerge}
+              onDelete={(target) =>
+                setPendingAction({ kind: 'deleteModule', module: target })
+              }
             />
           ))}
         </div>
@@ -214,6 +222,7 @@ export function DashboardPage() {
         confirmLabel={confirmation?.confirmLabel ?? 'Confirm'}
         busy={isBusy(confirmation?.kind, {
           deleteFile: deleteFile.isPending,
+          deleteModule: deleteModule.isPending,
           merge: mergeModules.isPending,
           generate: generateQuestions.isPending,
         })}
@@ -255,6 +264,17 @@ This consumes your AI quota and can take a while. Continue?`,
       kind: 'deleteFile',
       title: 'Delete file',
       message: `Delete “${action.file.filename}” permanently? This cannot be undone.`,
+      confirmLabel: 'Delete',
+    }
+  }
+
+  if (action.kind === 'deleteModule') {
+    return {
+      kind: 'deleteModule',
+      title: 'Delete module',
+      message: `Delete “${action.module.name}”? Its questions and attempts are removed, and its files are left unassigned.
+
+This cannot be undone.`,
       confirmLabel: 'Delete',
     }
   }

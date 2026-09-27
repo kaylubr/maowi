@@ -69,6 +69,22 @@ describe('generating questions', () => {
     ).not.toBeInTheDocument()
   })
 
+  it('offers Retry instead of Generate on a failed module', async () => {
+    stubDashboard(
+      [{ ...DRAFT_MODULE, status: 'failed', error_message: 'Gemini exploded' }],
+      [],
+    )
+
+    renderApp('/dashboard')
+
+    expect(
+      await screen.findByRole('button', { name: 'Retry questions for Cell Biology' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Generate questions for Cell Biology' }),
+    ).not.toBeInTheDocument()
+  })
+
   it('warns about AI quota before generating', async () => {
     const user = userEvent.setup()
     stubDashboard([DRAFT_MODULE], [])
@@ -154,6 +170,44 @@ describe('deleting a file', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Cancel' }))
 
     expect(api.calls).not.toContain(`DELETE /api/files/${FILE.id}`)
+  })
+})
+
+describe('deleting a module', () => {
+  it('deletes only after the confirmation is accepted', async () => {
+    const user = userEvent.setup()
+    const api = stubDashboard([DRAFT_MODULE], [], [
+      { method: 'DELETE', path: `/api/modules/${DRAFT_MODULE.id}`, status: 204 },
+    ])
+
+    renderApp('/dashboard')
+
+    await user.click(
+      await screen.findByRole('button', { name: 'Delete Cell Biology' }),
+    )
+    const dialog = await screen.findByRole('dialog', { name: 'Delete module' })
+    expect(dialog).toHaveTextContent(/cannot be undone/i)
+    expect(dialog).toHaveTextContent(/left unassigned/i)
+    await user.click(within(dialog).getByRole('button', { name: 'Delete' }))
+
+    await waitFor(() =>
+      expect(api.calls).toContain(`DELETE /api/modules/${DRAFT_MODULE.id}`),
+    )
+  })
+
+  it('keeps the module when the confirmation is cancelled', async () => {
+    const user = userEvent.setup()
+    const api = stubDashboard([DRAFT_MODULE], [])
+
+    renderApp('/dashboard')
+
+    await user.click(
+      await screen.findByRole('button', { name: 'Delete Cell Biology' }),
+    )
+    const dialog = await screen.findByRole('dialog', { name: 'Delete module' })
+    await user.click(within(dialog).getByRole('button', { name: 'Cancel' }))
+
+    expect(api.calls).not.toContain(`DELETE /api/modules/${DRAFT_MODULE.id}`)
   })
 })
 

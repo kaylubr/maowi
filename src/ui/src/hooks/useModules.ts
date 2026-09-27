@@ -49,6 +49,15 @@ export function useRenameModule() {
   })
 }
 
+export function useDeleteModule() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: modulesApi.deleteModule,
+    onSuccess: () => invalidateModuleAndFileLists(queryClient),
+  })
+}
+
 export function useMergeModules() {
   const queryClient = useQueryClient()
 

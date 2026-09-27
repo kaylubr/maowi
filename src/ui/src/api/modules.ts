@@ -41,6 +41,10 @@ export function renameModule(
   })
 }
 
+export function deleteModule(moduleId: number): Promise<null> {
+  return apiFetch<null>(`/api/modules/${moduleId}`, { method: 'DELETE' })
+}
+
 export function mergeModules(
   moduleId: number,
   targetModuleId: number,

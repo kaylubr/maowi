@@ -351,3 +351,53 @@ def test_module_status(client, db_session):
         "status": "draft",
         "error_message": None,
     }
+
+
+def test_delete_module_removes_it_and_unassigns_files(
+    client, db_session, session_factory
+):
+    user_id = authenticate(client)
+    module = modules_service.create_module(db_session, user_id, "Cell Biology")
+    file_id = upload(client, [("notes.docx", build_docx("Ribosome"))]).json()[0]["id"]
+    client.patch(f"/api/files/{file_id}", json={"module_id": module.id})
+
+    response = client.delete(f"/api/modules/{module.id}")
+
+    assert response.status_code == 204
+    with session_factory() as fresh_session:
+        assert fresh_session.get(Module, module.id) is None
+        assert fresh_session.get(File, file_id).module_id is None
+
+
+def test_delete_module_removes_its_questions(client, db_session, session_factory):
+    user_id = authenticate(client)
+    module = modules_service.create_module(db_session, user_id, "Cell Biology")
+    questions_service.create_questions(db_session, module, [GENERATED_QUESTION])
+
+    response = client.delete(f"/api/modules/{module.id}")
+
+    assert response.status_code == 204
+    with session_factory() as fresh_session:
+        remaining = fresh_session.scalars(
+            select(Question).where(Question.module_id == module.id)
+        ).all()
+        assert remaining == []
+
+
+def test_delete_module_requires_authentication(client, db_session):
+    user_id = authenticate(client)
+    module = modules_service.create_module(db_session, user_id, "Module")
+    client.cookies.clear()
+
+    assert client.delete(f"/api/modules/{module.id}").status_code == 401
+
+
+def test_delete_hides_other_users_modules(client, db_session):
+    owner_id = authenticate(client, "owner@example.com")
+    module = modules_service.create_module(db_session, owner_id, "Owner Module")
+    client.cookies.clear()
+    authenticate(client, "intruder@example.com")
+
+    response = client.delete(f"/api/modules/{module.id}")
+
+    assert response.status_code == 404

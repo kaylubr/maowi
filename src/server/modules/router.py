@@ -62,6 +62,16 @@ def rename_module(
     return service.rename_module(db, module, payload.name)
 
 
+@router.delete("/{module_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_module(
+    module_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> None:
+    module = get_owned_module(db, current_user.id, module_id)
+    service.delete_module(db, module)
+
+
 @router.post("/{module_id}/merge", response_model=ModuleRead)
 def merge_module(
     module_id: int,

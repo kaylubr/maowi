@@ -57,6 +57,11 @@ def rename_module(db: Session, module: Module, name: str) -> Module:
     return module
 
 
+def delete_module(db: Session, module: Module) -> None:
+    db.delete(module)
+    db.commit()
+
+
 def merge_modules(db: Session, source: Module, target: Module) -> Module:
     db.execute(
         update(File).where(File.module_id == source.id).values(module_id=target.id)
