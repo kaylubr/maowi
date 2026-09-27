@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useAuth } from '../../hooks/useAuth'
 import { Button } from '../ui/Button'
 import { ConfirmModal } from '../ui/ConfirmModal'
+import { Logo } from '../ui/Logo'
 import { ThemeToggle } from '../ui/ThemeToggle'
 
 export function Navbar() {
@@ -24,7 +25,7 @@ export function Navbar() {
       <nav className="navbar border-bottom">
         <div className="container">
           <Link to="/dashboard" className="navbar-brand">
-            Maowi
+            <Logo />
           </Link>
 
           <div className="d-flex align-items-center gap-2">

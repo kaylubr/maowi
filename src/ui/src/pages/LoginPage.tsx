@@ -25,10 +25,6 @@ export function LoginPage() {
     <main className="container py-5">
       <div className="row justify-content-center">
         <div className="col-12 col-md-6 col-lg-5">
-          <div className="mb-4">
-            <span className="fs-4 fw-semibold">Maowi</span>
-          </div>
-
           <div className="card">
             <div className="card-body p-4">
               <h1 className="card-title h3 mb-4">Log in</h1>

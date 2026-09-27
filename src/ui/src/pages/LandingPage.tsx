@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 
+import { Logo } from '../components/ui/Logo'
 import { ThemeToggle } from '../components/ui/ThemeToggle'
 
 const STUDY_MODES = [
@@ -25,7 +26,7 @@ export function LandingPage() {
     <div>
       <header data-bs-theme="dark" className="bg-dark text-white border-bottom">
         <div className="container d-flex flex-wrap align-items-center justify-content-between gap-3 py-3">
-          <span className="fs-4 fw-semibold">Maowi</span>
+          <Logo />
 
           <nav className="d-flex align-items-center gap-2">
             <Link to="/login" className="btn btn-link text-decoration-none">
