@@ -165,3 +165,25 @@ describe('logout', () => {
     expect(api.calls).not.toContain('POST /api/auth/logout')
   })
 })
+
+describe('back to the landing page', () => {
+  it('returns to the landing page from login', async () => {
+    const user = userEvent.setup()
+    stubApi([UNAUTHENTICATED])
+    const { router } = renderApp('/login')
+
+    await user.click(await screen.findByRole('link', { name: 'Back' }))
+
+    await waitFor(() => expect(router.state.location.pathname).toBe('/'))
+  })
+
+  it('returns to the landing page from register', async () => {
+    const user = userEvent.setup()
+    stubApi([UNAUTHENTICATED])
+    const { router } = renderApp('/register')
+
+    await user.click(await screen.findByRole('link', { name: 'Back' }))
+
+    await waitFor(() => expect(router.state.location.pathname).toBe('/'))
+  })
+})
