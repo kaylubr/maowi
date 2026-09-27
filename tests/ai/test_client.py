@@ -20,6 +20,6 @@ def test_generate_json_parses_response(monkeypatch):
     result = ai_client.generate_json("hello")
 
     assert result == {"assignments": [{"file_id": "1"}]}
-    assert captured["model"] == "gemini-2.5-flash-lite"
+    assert captured["model"] == "gemini-3.5-flash-lite"
     assert captured["contents"] == "hello"
     assert captured["config"].response_mime_type == "application/json"
