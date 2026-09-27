@@ -7,7 +7,8 @@ import type { IdentificationQuestion } from '../api/questions'
 import { parseCountParam } from '../api/questions'
 import { Button } from '../components/ui/Button'
 import { ConfirmModal } from '../components/ui/ConfirmModal'
-import { GlassCard } from '../components/ui/GlassCard'
+import { Input } from '../components/ui/Input'
+import { ErrorText } from '../components/ui/typography'
 import {
   useAbandonProtection,
   useAttemptRun,
@@ -15,9 +16,6 @@ import {
   useSubmitAttemptAnswer,
 } from '../hooks/useAttempts'
 import { useIdentificationQuestions } from '../hooks/useQuestions'
-
-const INPUT_CLASSES =
-  'w-full rounded-xl border border-white/20 bg-white/10 px-3 py-2 text-white placeholder-white/40 outline-none focus:border-white/50'
 
 export function IdentificationPage() {
   const { id } = useParams()
@@ -29,19 +27,15 @@ export function IdentificationPage() {
 
   if (error) {
     return (
-      <div className="space-y-4">
-        <p role="alert" className="text-red-300">
-          {error}
-        </p>
-        <Link to="/dashboard" className="text-sm underline">
-          Back to your modules
-        </Link>
+      <div>
+        <ErrorText>{error}</ErrorText>
+        <Link to="/dashboard">Back to your modules</Link>
       </div>
     )
   }
 
   if (!attempt) {
-    return <p className="text-white/60">Preparing your quiz…</p>
+    return <p className="text-body-secondary">Preparing your quiz…</p>
   }
 
   return (
@@ -137,12 +131,12 @@ function IdentificationQuiz({
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4">
-        <Link to="/dashboard" className="text-sm text-white/70 hover:text-white">
+    <div>
+      <div className="d-flex justify-content-between align-items-center gap-2 mb-3">
+        <Link to="/dashboard" className="btn btn-link text-decoration-none px-0">
           ← Back to your modules
         </Link>
-        <span className="text-sm text-white/60">
+        <span className="badge text-bg-secondary">
           {isComplete
             ? 'Attempt complete'
             : `Answered ${answeredCount} of ${questions.length}`}
@@ -150,33 +144,22 @@ function IdentificationQuiz({
       </div>
 
       {isComplete ? (
-        <div
-          role="status"
-          className="rounded-2xl border border-white/20 bg-white/10 p-6 text-center text-white shadow-xl backdrop-blur-md"
-        >
-          <p className="text-2xl font-semibold">
+        <div role="status" className="alert alert-info text-center">
+          <p className="fs-4 mb-1">
             You scored {completed.score} out of {completed.total_questions}
           </p>
-          <p className="mt-1 text-sm text-white/70">
-            This attempt has been locked and scored.
-          </p>
+          <p className="small mb-0">This attempt has been locked and scored.</p>
         </div>
       ) : null}
 
-      {actionError ? (
-        <p role="alert" className="text-red-300">
-          {actionError}
-        </p>
-      ) : null}
+      {actionError ? <ErrorText>{actionError}</ErrorText> : null}
 
       {questionsQuery.isPending ? (
-        <p className="text-white/60">Loading questions…</p>
+        <p className="text-body-secondary">Loading questions…</p>
       ) : null}
 
       {questionsQuery.isError ? (
-        <p role="alert" className="text-red-300">
-          {questionsQuery.error.message}
-        </p>
+        <ErrorText>{questionsQuery.error.message}</ErrorText>
       ) : null}
 
       {questions.map((question, position) => (
@@ -196,7 +179,7 @@ function IdentificationQuiz({
       ))}
 
       {questions.length > 0 ? (
-        <div className="flex items-center justify-end gap-4">
+        <div className="d-flex justify-content-end">
           <Button
             onClick={finish}
             disabled={isComplete || completeAttempt.isPending}
@@ -244,43 +227,48 @@ function QuestionBlock({
   const isLocked = isComplete || result !== undefined
 
   return (
-    <GlassCard>
-      <p className="mb-4 text-white">
-        <span className="mr-2 text-white/50">{position + 1}.</span>
-        {question.prompt}
-      </p>
-
-      <form
-        onSubmit={(event) => onCheck(question, event)}
-        className="flex flex-wrap items-start gap-3"
-      >
-        <input
-          aria-label={`Answer for question ${position + 1}`}
-          value={draft}
-          onChange={(event) => onDraft(event.target.value)}
-          disabled={isLocked}
-          placeholder="Type the exact answer"
-          className={`${INPUT_CLASSES} flex-1`}
-        />
-        <Button type="submit" disabled={isLocked || isPending || draft.trim() === ''}>
-          {isPending ? 'Checking…' : `Check question ${position + 1}`}
-        </Button>
-      </form>
-
-      {result ? (
-        <p
-          role="status"
-          className={`mt-4 text-sm font-medium ${
-            result.is_correct ? 'text-emerald-300' : 'text-red-300'
-          }`}
-        >
-          {result.is_correct ? 'Correct' : 'Incorrect'}
+    <div className="card mb-3">
+      <div className="card-body">
+        <p className="mb-3">
+          <span className="text-body-secondary me-2">{position + 1}.</span>
+          {question.prompt}
         </p>
-      ) : null}
 
-      {isComplete && !result ? (
-        <p className="mt-4 text-sm text-white/50">Not answered</p>
-      ) : null}
-    </GlassCard>
+        <form
+          onSubmit={(event) => onCheck(question, event)}
+          className="d-flex flex-wrap align-items-start gap-2"
+        >
+          <Input
+            aria-label={`Answer for question ${position + 1}`}
+            value={draft}
+            onChange={(event) => onDraft(event.target.value)}
+            disabled={isLocked}
+            placeholder="Type the exact answer"
+            className="flex-grow-1"
+          />
+          <Button
+            type="submit"
+            disabled={isLocked || isPending || draft.trim() === ''}
+          >
+            {isPending ? 'Checking…' : `Check question ${position + 1}`}
+          </Button>
+        </form>
+
+        {result ? (
+          <p
+            role="status"
+            className={`mt-3 mb-0 small fw-semibold ${
+              result.is_correct ? 'text-success' : 'text-danger'
+            }`}
+          >
+            {result.is_correct ? 'Correct' : 'Incorrect'}
+          </p>
+        ) : null}
+
+        {isComplete && !result ? (
+          <p className="mt-3 mb-0 small text-body-secondary">Not answered</p>
+        ) : null}
+      </div>
+    </div>
   )
 }

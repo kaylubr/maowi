@@ -5,7 +5,9 @@ import type { StudyModule } from '../../api/modules'
 import type { QuestionMode } from '../../api/questions'
 import { useModuleQuestionCount } from '../../hooks/useQuestions'
 import { Button } from '../ui/Button'
+import { Input } from '../ui/Input'
 import { Modal } from '../ui/Modal'
+import { ErrorText, Label } from '../ui/typography'
 
 type StudyModeModalProps = {
   module: StudyModule | null
@@ -29,9 +31,6 @@ const MODES: { value: QuestionMode; label: string; description: string }[] = [
     description: 'Type the answer from memory. Scored on exact wording.',
   },
 ]
-
-const INPUT_CLASSES =
-  'w-24 rounded-xl border border-white/20 bg-white/10 px-3 py-2 text-white outline-none focus:border-white/50'
 
 export function StudyModeModal({ module, onClose }: StudyModeModalProps) {
   if (module === null) {
@@ -69,74 +68,71 @@ function StudyModeDialog({
 
   return (
     <Modal open title={`Study ${module.name}`} onClose={onClose}>
-      <div className="space-y-5">
-        {isPending ? <p className="text-sm text-white/60">Loading questions…</p> : null}
+      {isPending ? <p className="text-body-secondary">Loading questions…</p> : null}
 
-        {isError ? (
-          <p role="alert" className="text-sm text-red-300">
-            {error instanceof Error ? error.message : 'Could not load questions.'}
-          </p>
-        ) : null}
+      {isError ? (
+        <ErrorText>
+          {error instanceof Error ? error.message : 'Could not load questions.'}
+        </ErrorText>
+      ) : null}
 
-        {!isPending && !isError ? (
-          <>
-            <fieldset className="space-y-3">
-              <legend className="mb-2 text-sm text-white/80">Study mode</legend>
-              {MODES.map((option) => (
+      {!isPending && !isError ? (
+        <>
+          <fieldset className="mb-3">
+            <legend className="form-label">Study mode</legend>
+            {MODES.map((option) => (
+              <div key={option.value} className="form-check">
+                <input
+                  className="form-check-input"
+                  type="radio"
+                  name="study-mode"
+                  id={`study-mode-${option.value}`}
+                  value={option.value}
+                  checked={mode === option.value}
+                  onChange={() => setMode(option.value)}
+                />
                 <label
-                  key={option.value}
-                  className="flex cursor-pointer items-start gap-3 rounded-xl border border-white/10 p-3 hover:bg-white/5"
+                  className="form-check-label"
+                  htmlFor={`study-mode-${option.value}`}
                 >
-                  <input
-                    type="radio"
-                    name="study-mode"
-                    value={option.value}
-                    checked={mode === option.value}
-                    onChange={() => setMode(option.value)}
-                    className="mt-1 h-4 w-4"
-                  />
-                  <span>
-                    <span className="block text-sm text-white">{option.label}</span>
-                    <span className="block text-xs text-white/60">
-                      {option.description}
-                    </span>
+                  <span className="d-block">{option.label}</span>
+                  <span className="d-block small text-body-secondary">
+                    {option.description}
                   </span>
                 </label>
-              ))}
-            </fieldset>
+              </div>
+            ))}
+          </fieldset>
 
-            <div>
-              <label htmlFor="question-count" className="mb-1 block text-sm text-white/80">
-                Number of questions
-              </label>
-              <input
-                id="question-count"
-                type="number"
-                min={1}
-                max={hasQuestions ? total : 1}
-                value={countInput}
-                onChange={(event) => setCountInput(event.target.value)}
-                onBlur={() => setCountInput(String(count))}
-                disabled={!hasQuestions}
-                className={INPUT_CLASSES}
-              />
-              <span className="mt-1 block text-xs text-white/50">
-                {hasQuestions
-                  ? `This module has ${total} question${total === 1 ? '' : 's'}.`
-                  : 'This module has no questions yet.'}
-              </span>
+          <div className="mb-3">
+            <Label htmlFor="question-count">Number of questions</Label>
+            <Input
+              id="question-count"
+              type="number"
+              min={1}
+              max={hasQuestions ? total : 1}
+              value={countInput}
+              onChange={(event) => setCountInput(event.target.value)}
+              onBlur={() => setCountInput(String(count))}
+              disabled={!hasQuestions}
+              style={{ maxWidth: '8rem' }}
+            />
+            <div className="form-text">
+              {hasQuestions
+                ? `This module has ${total} question${total === 1 ? '' : 's'}.`
+                : 'This module has no questions yet.'}
             </div>
-          </>
-        ) : null}
+          </div>
+        </>
+      ) : null}
 
-        <div className="flex justify-end gap-3">
-          <Button variant="ghost" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button onClick={start} disabled={!hasQuestions || isPending || isError}>
-            Start studying
-          </Button>
-        </div>
+      <div className="d-flex justify-content-end gap-2">
+        <Button variant="secondary" onClick={onClose}>
+          Cancel
+        </Button>
+        <Button onClick={start} disabled={!hasQuestions || isPending || isError}>
+          Start studying
+        </Button>
       </div>
     </Modal>
   )

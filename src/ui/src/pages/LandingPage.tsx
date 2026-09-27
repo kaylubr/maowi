@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 
-import { GlassCard } from '../components/ui/GlassCard'
+import { ThemeToggle } from '../components/ui/ThemeToggle'
 
 const STUDY_MODES = [
   {
@@ -22,57 +22,60 @@ const STUDY_MODES = [
 
 export function LandingPage() {
   return (
-    <div className="min-h-screen">
-      <header className="mx-auto flex w-full max-w-5xl items-center justify-between p-4 sm:p-6">
-        <span className="text-lg font-semibold text-white">Maowi</span>
-        <nav className="flex items-center gap-4 text-sm">
-          <Link to="/login" className="text-white/80 hover:text-white">
-            Log in
-          </Link>
-          <Link
-            to="/register"
-            className="rounded-2xl border border-white/20 bg-white/10 px-4 py-2 font-medium text-white shadow-xl backdrop-blur-md transition hover:bg-white/20"
-          >
-            Get started
-          </Link>
-        </nav>
+    <div>
+      <header data-bs-theme="dark" className="bg-dark text-white border-bottom">
+        <div className="container d-flex flex-wrap align-items-center justify-content-between gap-3 py-3">
+          <span className="fs-4 fw-semibold">Maowi</span>
+
+          <nav className="d-flex align-items-center gap-2">
+            <Link to="/login" className="btn btn-link text-decoration-none">
+              Log in
+            </Link>
+            <Link to="/register" className="btn btn-secondary">
+              Get started
+            </Link>
+            <ThemeToggle />
+          </nav>
+        </div>
       </header>
 
-      <main className="mx-auto w-full max-w-5xl px-4 pb-20 sm:px-6">
-        <section className="py-16 text-center sm:py-24">
-          <h1 className="text-4xl font-semibold tracking-tight text-white sm:text-6xl">
-            Turn your lecture notes into a study set
-          </h1>
-          <p className="mx-auto mt-6 max-w-2xl text-lg text-white/70">
-            Upload your PDFs, slides and handouts. Maowi groups them into topics
-            and writes the questions, so you can spend your time recalling
-            instead of re-reading.
-          </p>
+      <main className="container pb-5">
+        <div className="row py-5">
+          <div className="col-12 col-lg-8">
+            <h1 className="display-5 fw-bold">
+              Turn your lecture notes into a study set
+            </h1>
+            <p className="lead text-body-secondary">
+              Upload your PDFs, slides and handouts. Maowi groups them into topics
+              and writes the questions, so you can spend your time recalling
+              instead of re-reading.
+            </p>
 
-          <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
-            <Link
-              to="/register"
-              className="rounded-2xl border border-white/20 bg-white/20 px-6 py-3 font-medium text-white shadow-xl backdrop-blur-md transition hover:bg-white/30"
-            >
-              Create a free account
-            </Link>
-            <Link
-              to="/login"
-              className="rounded-2xl border border-white/20 bg-transparent px-6 py-3 font-medium text-white backdrop-blur-md transition hover:bg-white/10"
-            >
-              I already have one
-            </Link>
+            <div className="d-flex flex-wrap gap-2 mt-4">
+              <Link to="/register" className="btn btn-primary btn-lg">
+                Create a free account
+              </Link>
+              <Link to="/login" className="btn btn-secondary btn-lg">
+                I already have one
+              </Link>
+            </div>
           </div>
-        </section>
+        </div>
 
-        <section className="grid gap-6 sm:grid-cols-3">
+        <div className="row row-cols-1 row-cols-md-3 g-4">
           {STUDY_MODES.map((mode) => (
-            <GlassCard key={mode.name}>
-              <h2 className="mb-2 text-xl font-semibold text-white">{mode.name}</h2>
-              <p className="text-sm text-white/70">{mode.description}</p>
-            </GlassCard>
+            <div key={mode.name} className="col">
+              <div className="card h-100">
+                <div className="card-body">
+                  <h2 className="card-title h5">{mode.name}</h2>
+                  <p className="card-text text-body-secondary mb-0">
+                    {mode.description}
+                  </p>
+                </div>
+              </div>
+            </div>
           ))}
-        </section>
+        </div>
       </main>
     </div>
   )

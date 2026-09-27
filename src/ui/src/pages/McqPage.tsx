@@ -6,7 +6,7 @@ import type { MultipleChoiceQuestion } from '../api/questions'
 import { parseCountParam } from '../api/questions'
 import { Button } from '../components/ui/Button'
 import { ConfirmModal } from '../components/ui/ConfirmModal'
-import { GlassCard } from '../components/ui/GlassCard'
+import { ErrorText } from '../components/ui/typography'
 import {
   useAbandonProtection,
   useAttemptRun,
@@ -25,19 +25,15 @@ export function McqPage() {
 
   if (error) {
     return (
-      <div className="space-y-4">
-        <p role="alert" className="text-red-300">
-          {error}
-        </p>
-        <Link to="/dashboard" className="text-sm underline">
-          Back to your modules
-        </Link>
+      <div>
+        <ErrorText>{error}</ErrorText>
+        <Link to="/dashboard">Back to your modules</Link>
       </div>
     )
   }
 
   if (!attempt) {
-    return <p className="text-white/60">Preparing your quiz…</p>
+    return <p className="text-body-secondary">Preparing your quiz…</p>
   }
 
   return (
@@ -123,12 +119,12 @@ function McqQuiz({
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4">
-        <Link to="/dashboard" className="text-sm text-white/70 hover:text-white">
+    <div>
+      <div className="d-flex justify-content-between align-items-center gap-2 mb-3">
+        <Link to="/dashboard" className="btn btn-link text-decoration-none px-0">
           ← Back to your modules
         </Link>
-        <span className="text-sm text-white/60">
+        <span className="badge text-bg-secondary">
           {isComplete
             ? 'Attempt complete'
             : `Answered ${answeredCount} of ${questions.length}`}
@@ -136,33 +132,22 @@ function McqQuiz({
       </div>
 
       {isComplete ? (
-        <div
-          role="status"
-          className="rounded-2xl border border-white/20 bg-white/10 p-6 text-center text-white shadow-xl backdrop-blur-md"
-        >
-          <p className="text-2xl font-semibold">
+        <div role="status" className="alert alert-info text-center">
+          <p className="fs-4 mb-1">
             You scored {completed.score} out of {completed.total_questions}
           </p>
-          <p className="mt-1 text-sm text-white/70">
-            This attempt has been locked and scored.
-          </p>
+          <p className="small mb-0">This attempt has been locked and scored.</p>
         </div>
       ) : null}
 
-      {actionError ? (
-        <p role="alert" className="text-red-300">
-          {actionError}
-        </p>
-      ) : null}
+      {actionError ? <ErrorText>{actionError}</ErrorText> : null}
 
       {questionsQuery.isPending ? (
-        <p className="text-white/60">Loading questions…</p>
+        <p className="text-body-secondary">Loading questions…</p>
       ) : null}
 
       {questionsQuery.isError ? (
-        <p role="alert" className="text-red-300">
-          {questionsQuery.error.message}
-        </p>
+        <ErrorText>{questionsQuery.error.message}</ErrorText>
       ) : null}
 
       {questions.map((question, position) => (
@@ -178,7 +163,7 @@ function McqQuiz({
       ))}
 
       {questions.length > 0 ? (
-        <div className="flex items-center justify-end gap-4">
+        <div className="d-flex justify-content-end">
           <Button
             onClick={finish}
             disabled={isComplete || completeAttempt.isPending}
@@ -219,50 +204,58 @@ function QuestionBlock({
   const isLocked = isComplete || result !== undefined
 
   return (
-    <GlassCard>
-      <p className="mb-4 text-white">
-        <span className="mr-2 text-white/50">{position + 1}.</span>
-        {question.prompt}
-      </p>
+    <div className="card mb-3">
+      <div className="card-body">
+        <p className="mb-3">
+          <span className="text-body-secondary me-2">{position + 1}.</span>
+          {question.prompt}
+        </p>
 
-      <div className="space-y-2">
-        {question.options.map((option) => (
-          <label
-            key={option}
-            className={`flex items-center gap-3 rounded-xl border border-white/10 p-3 text-sm ${
-              isLocked ? 'text-white/60' : 'cursor-pointer hover:bg-white/5'
+        {question.options.map((option, optionIndex) => {
+          const optionId = `question-${question.id}-option-${optionIndex}`
+          const isChosen = result?.user_answer === option
+
+          return (
+            <div className="form-check" key={optionId}>
+              <input
+                className="form-check-input"
+                type="radio"
+                name={`question-${question.id}`}
+                id={optionId}
+                value={option}
+                checked={isChosen}
+                disabled={isLocked || isPending}
+                onChange={() => onChoose(question, option)}
+              />
+              <label
+                className={`form-check-label${isChosen ? ' fw-semibold' : ''}`}
+                htmlFor={optionId}
+              >
+                {option}
+              </label>
+            </div>
+          )
+        })}
+
+        {result ? (
+          <p
+            role="status"
+            className={`mt-3 mb-0 small fw-semibold ${
+              result.is_correct ? 'text-success' : 'text-danger'
             }`}
           >
-            <input
-              type="radio"
-              name={`question-${question.id}`}
-              value={option}
-              checked={result?.user_answer === option}
-              disabled={isLocked || isPending}
-              onChange={() => onChoose(question, option)}
-              className="h-4 w-4"
-            />
-            {option}
-          </label>
-        ))}
+            {result.is_correct ? 'Correct' : 'Incorrect'}
+          </p>
+        ) : null}
+
+        {isPending ? (
+          <p className="mt-3 mb-0 small text-body-secondary">Saving…</p>
+        ) : null}
+
+        {isComplete && !result ? (
+          <p className="mt-3 mb-0 small text-body-secondary">Not answered</p>
+        ) : null}
       </div>
-
-      {result ? (
-        <p
-          role="status"
-          className={`mt-4 text-sm font-medium ${
-            result.is_correct ? 'text-emerald-300' : 'text-red-300'
-          }`}
-        >
-          {result.is_correct ? 'Correct' : 'Incorrect'}
-        </p>
-      ) : null}
-
-      {isPending ? <p className="mt-4 text-sm text-white/50">Saving…</p> : null}
-
-      {isComplete && !result ? (
-        <p className="mt-4 text-sm text-white/50">Not answered</p>
-      ) : null}
-    </GlassCard>
+    </div>
   )
 }

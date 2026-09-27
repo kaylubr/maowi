@@ -14,12 +14,11 @@ export function LoadingOverlay() {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div
-        role="status"
-        aria-label="Loading"
-        className="h-12 w-12 animate-spin rounded-full border-4 border-white/30 border-t-white"
-      />
+    <div
+      className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-body bg-opacity-75"
+      style={{ zIndex: 1090 }}
+    >
+      <div className="spinner-border" role="status" aria-label="Loading" />
     </div>
   )
 }

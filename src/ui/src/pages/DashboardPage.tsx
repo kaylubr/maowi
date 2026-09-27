@@ -8,17 +8,14 @@ import { StudyModeModal } from '../components/modules/StudyModeModal'
 import { UploadFilesModal } from '../components/modules/UploadFilesModal'
 import { Button } from '../components/ui/Button'
 import { ConfirmModal } from '../components/ui/ConfirmModal'
-import { GlassCard } from '../components/ui/GlassCard'
 import { Modal } from '../components/ui/Modal'
+import { ErrorText, Label } from '../components/ui/typography'
 import { useDeleteFile, useFiles } from '../hooks/useFiles'
 import {
   useGenerateModuleQuestions,
   useMergeModules,
   useModules,
 } from '../hooks/useModules'
-
-const SELECT_CLASSES =
-  'w-full rounded-xl border border-white/20 bg-white/10 px-3 py-2 text-white outline-none focus:border-white/50 [&>option]:text-slate-900'
 
 type PendingAction =
   | { kind: 'generate'; module: StudyModule }
@@ -94,86 +91,76 @@ export function DashboardPage() {
   const confirmation = pendingAction ? describePendingAction(pendingAction) : null
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-2xl font-semibold text-white">Your modules</h1>
-        <div className="flex gap-3">
-          <Button variant="ghost" onClick={() => setShowCreateModule(true)}>
+    <div>
+      <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+        <h1 className="h3 mb-0">Your modules</h1>
+        <div className="d-flex gap-2">
+          <Button variant="secondary" onClick={() => setShowCreateModule(true)}>
             New module
           </Button>
           <Button onClick={() => setShowUpload(true)}>Upload files</Button>
         </div>
       </div>
 
-      {actionError ? (
-        <p role="alert" className="text-red-300">
-          {actionError}
-        </p>
-      ) : null}
+      {actionError ? <ErrorText>{actionError}</ErrorText> : null}
 
       {modulesQuery.isError ? (
-        <p role="alert" className="text-red-300">
-          {modulesQuery.error.message}
-        </p>
+        <ErrorText>{modulesQuery.error.message}</ErrorText>
       ) : null}
 
       {modulesQuery.isSuccess && modules.length === 0 ? (
-        <GlassCard>
-          <p className="text-white/70">
-            No modules yet. Upload your lecture files and they will be grouped by
-            topic automatically, or create a module by hand.
-          </p>
-        </GlassCard>
+        <p className="text-body-secondary">
+          No modules yet. Upload your lecture files and they will be grouped by
+          topic automatically, or create a module by hand.
+        </p>
       ) : null}
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        {modules.map((module) => (
-          <ModuleCard
-            key={module.id}
-            module={module}
-            onGenerate={(target) =>
-              setPendingAction({ kind: 'generate', module: target })
-            }
-            onStudy={setStudyModule}
-            onMerge={startMerge}
-          />
-        ))}
-      </div>
+      {modules.length > 0 ? (
+        <div className="row row-cols-1 row-cols-md-2 g-4">
+          {modules.map((module) => (
+            <ModuleCard
+              key={module.id}
+              module={module}
+              onGenerate={(target) =>
+                setPendingAction({ kind: 'generate', module: target })
+              }
+              onStudy={setStudyModule}
+              onMerge={startMerge}
+            />
+          ))}
+        </div>
+      ) : null}
 
-      <section className="space-y-4">
-        <h2 className="text-xl font-semibold text-white">Your files</h2>
+      <section className="mt-5">
+        <h2 className="h4 mb-3">Your files</h2>
 
         {filesQuery.isSuccess && files.length === 0 ? (
-          <GlassCard>
-            <p className="text-white/70">
-              Nothing uploaded yet. PDF, DOCX and PPTX are supported.
-            </p>
-          </GlassCard>
+          <p className="text-body-secondary">
+            Nothing uploaded yet. PDF, DOCX and PPTX are supported.
+          </p>
         ) : null}
 
         {files.length > 0 ? (
-          <GlassCard className="p-0">
-            <ul className="divide-y divide-white/10">
-              {files.map((file) => (
-                <li
-                  key={file.id}
-                  className="flex flex-wrap items-center justify-between gap-3 p-4"
-                >
-                  <span className="text-sm text-white">{file.filename}</span>
-                  <span className="flex items-center gap-3">
-                    <span className="text-xs text-white/60">{file.status}</span>
-                    <Button
-                      variant="ghost"
-                      aria-label={`Delete ${file.filename}`}
-                      onClick={() => setPendingAction({ kind: 'deleteFile', file })}
-                    >
-                      Delete
-                    </Button>
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </GlassCard>
+          <ul className="list-group">
+            {files.map((file) => (
+              <li
+                key={file.id}
+                className="list-group-item d-flex flex-wrap justify-content-between align-items-center gap-2"
+              >
+                <span className="text-break">{file.filename}</span>
+                <span className="d-flex align-items-center gap-2">
+                  <span className="badge text-bg-secondary">{file.status}</span>
+                  <Button
+                    variant="ghost"
+                    aria-label={`Delete ${file.filename}`}
+                    onClick={() => setPendingAction({ kind: 'deleteFile', file })}
+                  >
+                    Delete
+                  </Button>
+                </span>
+              </li>
+            ))}
+          </ul>
         ) : null}
       </section>
 
@@ -182,48 +169,41 @@ export function DashboardPage() {
         title="Merge module"
         onClose={() => setMergeSource(null)}
       >
-        <div className="space-y-4">
-          <p className="text-sm text-white/70">
-            Move everything out of “{mergeSource?.name}” and into another module.
-            The module you pick keeps its name; “{mergeSource?.name}” is removed.
+        <p className="text-body-secondary">
+          Move everything out of “{mergeSource?.name}” and into another module.
+          The module you pick keeps its name; “{mergeSource?.name}” is removed.
+        </p>
+
+        {mergeTargets.length === 0 ? (
+          <p className="text-warning-emphasis">
+            You need at least two modules before you can merge.
           </p>
-
-          {mergeTargets.length === 0 ? (
-            <p className="text-sm text-amber-200">
-              You need at least two modules before you can merge.
-            </p>
-          ) : (
-            <div>
-              <label
-                htmlFor="merge-target"
-                className="mb-1 block text-sm text-white/80"
-              >
-                Merge into
-              </label>
-              <select
-                id="merge-target"
-                value={mergeTargetId}
-                onChange={(event) => setMergeTargetId(event.target.value)}
-                className={SELECT_CLASSES}
-              >
-                <option value="">Choose a module…</option>
-                {mergeTargets.map((module) => (
-                  <option key={module.id} value={module.id}>
-                    {module.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          <div className="flex justify-end gap-3">
-            <Button variant="ghost" onClick={() => setMergeSource(null)}>
-              Cancel
-            </Button>
-            <Button onClick={continueMerge} disabled={mergeTargetId === ''}>
-              Continue
-            </Button>
+        ) : (
+          <div className="mb-3">
+            <Label htmlFor="merge-target">Merge into</Label>
+            <select
+              id="merge-target"
+              className="form-select"
+              value={mergeTargetId}
+              onChange={(event) => setMergeTargetId(event.target.value)}
+            >
+              <option value="">Choose a module…</option>
+              {mergeTargets.map((module) => (
+                <option key={module.id} value={module.id}>
+                  {module.name}
+                </option>
+              ))}
+            </select>
           </div>
+        )}
+
+        <div className="d-flex justify-content-end gap-2">
+          <Button variant="secondary" onClick={() => setMergeSource(null)}>
+            Cancel
+          </Button>
+          <Button onClick={continueMerge} disabled={mergeTargetId === ''}>
+            Continue
+          </Button>
         </div>
       </Modal>
 

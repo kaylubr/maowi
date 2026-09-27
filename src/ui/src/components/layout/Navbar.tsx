@@ -1,13 +1,16 @@
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 
 import { useAuth } from '../../hooks/useAuth'
 import { Button } from '../ui/Button'
 import { ConfirmModal } from '../ui/ConfirmModal'
+import { ThemeToggle } from '../ui/ThemeToggle'
 
 export function Navbar() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
+  const { pathname } = useLocation()
+  const isDashboard = pathname === '/dashboard'
   const [confirmingLogout, setConfirmingLogout] = useState(false)
 
   const confirmLogout = async () => {
@@ -17,17 +20,24 @@ export function Navbar() {
   }
 
   return (
-    <header className="border-b border-white/10 bg-white/5 backdrop-blur-md">
-      <nav className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 p-4">
-        <Link to="/dashboard" className="text-lg font-semibold text-white">
-          Maowi
-        </Link>
+    <header data-bs-theme="dark" className="bg-dark text-white">
+      <nav className="navbar border-bottom">
+        <div className="container">
+          <Link to="/dashboard" className="navbar-brand">
+            Maowi
+          </Link>
 
-        <div className="flex items-center gap-4">
-          {user ? <span className="text-sm text-white/70">{user.email}</span> : null}
-          <Button variant="ghost" onClick={() => setConfirmingLogout(true)}>
-            Log out
-          </Button>
+          <div className="d-flex align-items-center gap-2">
+            {user ? (
+              <span className="text-body-secondary small d-none d-sm-inline">
+                {user.email}
+              </span>
+            ) : null}
+            <Button variant="ghost" onClick={() => setConfirmingLogout(true)}>
+              Log out
+            </Button>
+            {isDashboard ? <ThemeToggle /> : null}
+          </div>
         </div>
       </nav>
 

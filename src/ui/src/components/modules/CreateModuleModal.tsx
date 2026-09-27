@@ -4,10 +4,9 @@ import type { UploadedFile } from '../../api/files'
 import { useFiles } from '../../hooks/useFiles'
 import { useCreateModule } from '../../hooks/useModules'
 import { Button } from '../ui/Button'
+import { Input } from '../ui/Input'
 import { Modal } from '../ui/Modal'
-
-const INPUT_CLASSES =
-  'w-full rounded-xl border border-white/20 bg-white/10 px-3 py-2 text-white placeholder-white/40 outline-none focus:border-white/50'
+import { ErrorText, Label } from '../ui/typography'
 
 type CreateModuleModalProps = {
   open: boolean
@@ -52,65 +51,65 @@ export function CreateModuleModal({ open, onClose }: CreateModuleModalProps) {
 
   return (
     <Modal open={open} title="Create module" onClose={close}>
-      <div className="space-y-4">
-        <div>
-          <label htmlFor="module-name" className="mb-1 block text-sm text-white/80">
-            Module name
-          </label>
-          <input
-            id="module-name"
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            placeholder="Cell Biology"
-            className={INPUT_CLASSES}
-          />
-        </div>
+      <div className="mb-3">
+        <Label htmlFor="module-name">Module name</Label>
+        <Input
+          id="module-name"
+          value={name}
+          onChange={(event) => setName(event.target.value)}
+          placeholder="Cell Biology"
+        />
+      </div>
 
-        <fieldset>
-          <legend className="mb-2 text-sm text-white/80">
-            Parsed files not yet in a module
-          </legend>
+      <fieldset className="mb-3">
+        <legend className="form-label">Parsed files not yet in a module</legend>
 
-          {assignableFiles.length === 0 ? (
-            <p className="text-sm text-white/50">
-              No unassigned parsed files. Upload something first.
-            </p>
-          ) : (
-            <ul className="max-h-48 space-y-2 overflow-y-auto">
-              {assignableFiles.map((file) => (
-                <li key={file.id}>
-                  <label className="flex items-center gap-3 text-sm text-white/80">
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.includes(file.id)}
-                      onChange={() => toggleFile(file.id)}
-                      className="h-4 w-4"
-                    />
+        {assignableFiles.length === 0 ? (
+          <p className="text-body-secondary small mb-0">
+            No unassigned parsed files. Upload something first.
+          </p>
+        ) : (
+          <ul
+            className="list-group overflow-auto"
+            style={{ maxHeight: '12rem' }}
+          >
+            {assignableFiles.map((file) => (
+              <li key={file.id} className="list-group-item">
+                <div className="form-check mb-0">
+                  <input
+                    className="form-check-input"
+                    type="checkbox"
+                    id={`assign-file-${file.id}`}
+                    checked={selectedIds.includes(file.id)}
+                    onChange={() => toggleFile(file.id)}
+                  />
+                  <label
+                    className="form-check-label text-break"
+                    htmlFor={`assign-file-${file.id}`}
+                  >
                     {file.filename}
                   </label>
-                </li>
-              ))}
-            </ul>
-          )}
-        </fieldset>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </fieldset>
 
-        {createModule.isError ? (
-          <p role="alert" className="text-sm text-red-300">
-            {createModule.error.message}
-          </p>
-        ) : null}
+      {createModule.isError ? (
+        <ErrorText>{createModule.error.message}</ErrorText>
+      ) : null}
 
-        <div className="flex justify-end gap-3">
-          <Button variant="ghost" onClick={close}>
-            Cancel
-          </Button>
-          <Button
-            onClick={submit}
-            disabled={name.trim() === '' || createModule.isPending}
-          >
-            {createModule.isPending ? 'Creating…' : 'Create'}
-          </Button>
-        </div>
+      <div className="d-flex justify-content-end gap-2">
+        <Button variant="secondary" onClick={close}>
+          Cancel
+        </Button>
+        <Button
+          onClick={submit}
+          disabled={name.trim() === '' || createModule.isPending}
+        >
+          {createModule.isPending ? 'Creating…' : 'Create'}
+        </Button>
       </div>
     </Modal>
   )

@@ -3,11 +3,9 @@ import type { FormEvent } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 
 import { Button } from '../components/ui/Button'
-import { GlassCard } from '../components/ui/GlassCard'
+import { Input } from '../components/ui/Input'
+import { ErrorText, Label } from '../components/ui/typography'
 import { useAuth } from '../hooks/useAuth'
-
-const INPUT_CLASSES =
-  'w-full rounded-xl border border-white/20 bg-white/10 px-3 py-2 text-white placeholder-white/40 outline-none focus:border-white/50'
 
 const MINIMUM_PASSWORD_LENGTH = 8
 
@@ -26,64 +24,63 @@ export function RegisterPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4">
-      <GlassCard className="w-full max-w-sm">
-        <h1 className="mb-6 text-2xl font-semibold text-white">Create account</h1>
-
-        <form onSubmit={submit} className="space-y-4">
-          <div>
-            <label htmlFor="email" className="mb-1 block text-sm text-white/80">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              required
-              autoComplete="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              className={INPUT_CLASSES}
-            />
+    <main className="container py-5">
+      <div className="row justify-content-center">
+        <div className="col-12 col-md-6 col-lg-5">
+          <div className="mb-4">
+            <span className="fs-4 fw-semibold">Maowi</span>
           </div>
 
-          <div>
-            <label htmlFor="password" className="mb-1 block text-sm text-white/80">
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              required
-              minLength={MINIMUM_PASSWORD_LENGTH}
-              autoComplete="new-password"
-              aria-describedby="password-hint"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              className={INPUT_CLASSES}
-            />
-            <p id="password-hint" className="mt-1 text-xs text-white/50">
-              At least {MINIMUM_PASSWORD_LENGTH} characters.
-            </p>
+          <div className="card">
+            <div className="card-body p-4">
+              <h1 className="card-title h3 mb-4">Create account</h1>
+
+              <form onSubmit={submit}>
+                <div className="mb-3">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    required
+                    autoComplete="email"
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                  />
+                </div>
+
+                <div className="mb-3">
+                  <Label htmlFor="password">Password</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    required
+                    minLength={MINIMUM_PASSWORD_LENGTH}
+                    autoComplete="new-password"
+                    aria-describedby="password-hint"
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                  />
+                  <div id="password-hint" className="form-text">
+                    At least {MINIMUM_PASSWORD_LENGTH} characters.
+                  </div>
+                </div>
+
+                {register.isError ? (
+                  <ErrorText>{register.error.message}</ErrorText>
+                ) : null}
+
+                <Button type="submit" disabled={register.isPending} className="w-100">
+                  {register.isPending ? 'Creating account…' : 'Create account'}
+                </Button>
+              </form>
+
+              <p className="mt-3 mb-0 small text-body-secondary">
+                Already have an account? <Link to="/login">Log in</Link>
+              </p>
+            </div>
           </div>
-
-          {register.isError ? (
-            <p role="alert" className="text-sm text-red-300">
-              {register.error.message}
-            </p>
-          ) : null}
-
-          <Button type="submit" disabled={register.isPending} className="w-full">
-            {register.isPending ? 'Creating account…' : 'Create account'}
-          </Button>
-        </form>
-
-        <p className="mt-6 text-sm text-white/70">
-          Already have an account?{' '}
-          <Link to="/login" className="underline">
-            Log in
-          </Link>
-        </p>
-      </GlassCard>
-    </div>
+        </div>
+      </div>
+    </main>
   )
 }

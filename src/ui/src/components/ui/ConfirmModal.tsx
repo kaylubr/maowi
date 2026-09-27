@@ -24,9 +24,11 @@ export function ConfirmModal({
 }: ConfirmModalProps) {
   return (
     <Modal open={open} title={title} onClose={onCancel}>
-      <p className="mb-6 whitespace-pre-line text-white/80">{message}</p>
-      <div className="flex justify-end gap-3">
-        <Button variant="ghost" onClick={onCancel} disabled={busy}>
+      <p className="mb-4 text-body-secondary" style={{ whiteSpace: 'pre-line' }}>
+        {message}
+      </p>
+      <div className="d-flex justify-content-end gap-2">
+        <Button variant="secondary" onClick={onCancel} disabled={busy}>
           {cancelLabel}
         </Button>
         <Button variant="danger" onClick={onConfirm} disabled={busy}>

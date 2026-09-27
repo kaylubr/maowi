@@ -3,7 +3,7 @@ import { Link, useParams, useSearchParams } from 'react-router-dom'
 
 import { parseCountParam } from '../api/questions'
 import { Button } from '../components/ui/Button'
-import { GlassCard } from '../components/ui/GlassCard'
+import { ErrorText } from '../components/ui/typography'
 import { useFlashcardQuestions } from '../hooks/useQuestions'
 
 export function FlashcardPage() {
@@ -24,28 +24,24 @@ export function FlashcardPage() {
   }
 
   if (!Number.isInteger(moduleId)) {
-    return <p className="text-red-300">This module could not be found.</p>
+    return <ErrorText>This module could not be found.</ErrorText>
   }
 
   if (questionsQuery.isPending) {
-    return <p className="text-white/60">Loading flashcards…</p>
+    return <p className="text-body-secondary">Loading flashcards…</p>
   }
 
   if (questionsQuery.isError) {
-    return (
-      <p role="alert" className="text-red-300">
-        {questionsQuery.error.message}
-      </p>
-    )
+    return <ErrorText>{questionsQuery.error.message}</ErrorText>
   }
 
   if (questions.length === 0) {
     return (
-      <div className="space-y-4">
-        <p className="text-white/70">This module has no questions to study yet.</p>
-        <Link to="/dashboard" className="text-sm underline">
-          Back to your modules
-        </Link>
+      <div>
+        <p className="text-body-secondary">
+          This module has no questions to study yet.
+        </p>
+        <Link to="/dashboard">Back to your modules</Link>
       </div>
     )
   }
@@ -55,46 +51,47 @@ export function FlashcardPage() {
   const isLast = index === questions.length - 1
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
-      <div className="flex items-center justify-between gap-4">
-        <Link to="/dashboard" className="text-sm text-white/70 hover:text-white">
-          ← Back to your modules
-        </Link>
-        <span className="text-sm text-white/60">
-          Card {index + 1} of {questions.length}
-        </span>
-      </div>
+    <div className="row justify-content-center">
+      <div className="col-12 col-lg-8">
+        <div className="d-flex justify-content-between align-items-center gap-2 mb-3">
+          <Link to="/dashboard" className="btn btn-link text-decoration-none px-0">
+            ← Back to your modules
+          </Link>
+          <span className="badge text-bg-secondary">
+            Card {index + 1} of {questions.length}
+          </span>
+        </div>
 
-      <button
-        type="button"
-        onClick={() => setShowAnswer((current) => !current)}
-        className="flex min-h-64 w-full cursor-pointer flex-col items-center justify-center gap-4 rounded-2xl border border-white/20 bg-white/10 p-8 text-white shadow-xl backdrop-blur-md transition hover:bg-white/15"
-      >
-        <span className="text-xs font-medium uppercase tracking-widest text-white/50">
-          {showAnswer ? 'Answer' : 'Question'}
-        </span>
-        <span className="text-center text-2xl">
-          {showAnswer ? question.answer : question.prompt}
-        </span>
-        <span className="text-xs text-white/40">
-          {showAnswer ? 'Click to see the question' : 'Click to reveal the answer'}
-        </span>
-      </button>
+        <button
+          type="button"
+          onClick={() => setShowAnswer((current) => !current)}
+          className="btn btn-secondary w-100 d-flex flex-column justify-content-center align-items-center gap-3 py-5"
+          style={{ minHeight: '16rem' }}
+        >
+          <span className="badge text-bg-secondary">
+            {showAnswer ? 'Answer' : 'Question'}
+          </span>
+          <span className="fs-3 text-body">
+            {showAnswer ? question.answer : question.prompt}
+          </span>
+          <span className="small text-body-secondary">
+            {showAnswer ? 'Click to see the question' : 'Click to reveal the answer'}
+          </span>
+        </button>
 
-      <div className="flex items-center justify-between gap-4">
-        <Button variant="ghost" onClick={() => goTo(index - 1)} disabled={isFirst}>
-          Previous
-        </Button>
-        <Button variant="ghost" onClick={() => goTo(index + 1)} disabled={isLast}>
-          Next
-        </Button>
-      </div>
+        <div className="d-flex justify-content-between gap-2 mt-3">
+          <Button variant="secondary" onClick={() => goTo(index - 1)} disabled={isFirst}>
+            Previous
+          </Button>
+          <Button variant="secondary" onClick={() => goTo(index + 1)} disabled={isLast}>
+            Next
+          </Button>
+        </div>
 
-      <GlassCard className="p-4">
-        <p className="text-xs text-white/50">
+        <p className="small text-body-secondary mt-3 mb-0">
           Flashcards are not scored. Flip through as many times as you like.
         </p>
-      </GlassCard>
+      </div>
     </div>
   )
 }
