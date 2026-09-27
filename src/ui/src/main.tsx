@@ -5,6 +5,8 @@ import { RouterProvider, createBrowserRouter } from 'react-router-dom'
 
 import 'bootstrap/dist/css/bootstrap.min.css'
 
+import './fonts.css'
+
 import { LoadingOverlay } from './components/ui/LoadingOverlay'
 import { routes } from './routes'
 
