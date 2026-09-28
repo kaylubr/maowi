@@ -1,0 +1,74 @@
+:root {
+  --brand-accent: #f0a02a;
+  --brand-accent-soft: rgba(240, 160, 42, 0.16);
+  --brand-accent-ink: #241703;
+  --brand-accent-on-dark: #f8c165;
+  --brand-radius: 1rem;
+}
+
+.brand-header {
+  border-bottom: 2px solid var(--brand-accent);
+}
+
+.brand-eyebrow {
+  color: var(--bs-secondary-color);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.brand-eyebrow-accent {
+  color: var(--brand-accent-on-dark);
+}
+
+.brand-card {
+  border-radius: var(--brand-radius);
+  overflow: hidden;
+}
+
+.brand-chip {
+  background: var(--brand-accent-soft);
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  padding: 0.25rem 0.7rem;
+}
+
+.brand-icon-badge {
+  align-items: center;
+  background: var(--brand-accent);
+  border-radius: 999px;
+  color: var(--brand-accent-ink);
+  display: inline-flex;
+  flex-shrink: 0;
+  height: 3.25rem;
+  justify-content: center;
+  width: 3.25rem;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .brand-fade {
+    animation: brand-fade 180ms ease-out;
+  }
+
+  .brand-lift {
+    transition: transform 150ms ease, box-shadow 150ms ease;
+  }
+
+  .brand-lift:hover {
+    box-shadow: 0 0.5rem 1.25rem rgba(0, 0, 0, 0.12);
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes brand-fade {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

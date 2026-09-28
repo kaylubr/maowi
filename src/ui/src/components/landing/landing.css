@@ -1,8 +1,8 @@
 .landing {
-  --landing-accent: #f0a02a;
-  --landing-accent-soft: rgba(240, 160, 42, 0.16);
-  --landing-accent-ink: #241703;
-  --landing-radius: 1rem;
+  --landing-accent: var(--brand-accent);
+  --landing-accent-soft: var(--brand-accent-soft);
+  --landing-accent-ink: var(--brand-accent-ink);
+  --landing-radius: var(--brand-radius);
   --landing-section: 4.5rem;
 }
 
@@ -19,7 +19,7 @@
 }
 
 .landing-hero .landing-eyebrow {
-  color: #f8c165;
+  color: var(--brand-accent-on-dark);
 }
 
 .landing-section {

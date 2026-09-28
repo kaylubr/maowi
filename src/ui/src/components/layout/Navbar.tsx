@@ -21,8 +21,8 @@ export function Navbar() {
   }
 
   return (
-    <header data-bs-theme="dark" className="bg-dark text-white">
-      <nav className="navbar border-bottom">
+    <header data-bs-theme="dark" className="bg-dark text-white brand-header">
+      <nav className="navbar">
         <div className="container">
           <Link to="/dashboard" className="navbar-brand">
             <Logo />

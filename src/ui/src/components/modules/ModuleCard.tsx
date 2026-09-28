@@ -10,7 +10,7 @@ type ModuleCardProps = {
 export function ModuleCard({ module, onStudy, onDelete }: ModuleCardProps) {
   return (
     <div className="col">
-      <div className="card h-100">
+      <div className="card h-100 brand-card brand-lift">
         <div className="card-body">
           <h3 className="card-title h5 mb-0">{module.name}</h3>
         </div>

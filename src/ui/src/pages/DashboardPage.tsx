@@ -4,7 +4,9 @@ import { useQueryClient } from '@tanstack/react-query'
 import type { StudyModule } from '../api/modules'
 import { MODULES_QUERY_KEY } from '../api/modules'
 import { CreateModuleModal } from '../components/modules/CreateModuleModal'
+import { EmptyModules } from '../components/modules/EmptyModules'
 import { ModuleCard } from '../components/modules/ModuleCard'
+import { ModuleGridSkeleton } from '../components/modules/ModuleGridSkeleton'
 import { StudyModeModal } from '../components/modules/StudyModeModal'
 import { Button } from '../components/ui/Button'
 import { ConfirmModal } from '../components/ui/ConfirmModal'
@@ -80,10 +82,28 @@ export function DashboardPage() {
   }
 
   return (
-    <div>
-      <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
-        <h1 className="h3 mb-0">Your modules</h1>
-        <Button onClick={openCreateModal}>Add module</Button>
+    <div className="brand-fade">
+      <section
+        data-bs-theme="dark"
+        className="bg-dark text-white brand-card p-4 p-lg-5 mb-4"
+      >
+        <div className="row align-items-center g-4">
+          <div className="col-12 col-lg-7">
+            <p className="brand-eyebrow brand-eyebrow-accent mb-2">
+              Your study space
+            </p>
+            <h1 className="display-6 fw-bold mb-2">Welcome back</h1>
+            <p className="text-white-50 mb-0">{heroLead(modules.length)}</p>
+          </div>
+
+          <div className="col-12 col-lg-5 d-flex justify-content-lg-end">
+            <Button onClick={openCreateModal}>Add module</Button>
+          </div>
+        </div>
+      </section>
+
+      <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <h2 className="h4 mb-0">Your modules</h2>
       </div>
 
       {actionError ? <ErrorText>{actionError}</ErrorText> : null}
@@ -92,25 +112,26 @@ export function DashboardPage() {
         <ErrorText>{modulesQuery.error.message}</ErrorText>
       ) : null}
 
-      {modulesQuery.isSuccess && modules.length === 0 ? (
-        <p className="text-body-secondary">
-          No modules yet. Add a module with your lecture files and Maowi will
-          write the study questions.
-        </p>
-      ) : null}
+      <div aria-busy={modulesQuery.isPending}>
+        {modulesQuery.isPending ? <ModuleGridSkeleton /> : null}
 
-      {modules.length > 0 ? (
-        <div className="row row-cols-1 row-cols-md-2 g-4">
-          {modules.map((module) => (
-            <ModuleCard
-              key={module.id}
-              module={module}
-              onStudy={setStudyModule}
-              onDelete={setModuleToDelete}
-            />
-          ))}
-        </div>
-      ) : null}
+        {modulesQuery.isSuccess && modules.length === 0 ? (
+          <EmptyModules onAdd={openCreateModal} />
+        ) : null}
+
+        {modules.length > 0 ? (
+          <div className="row row-cols-1 row-cols-md-2 g-4">
+            {modules.map((module) => (
+              <ModuleCard
+                key={module.id}
+                module={module}
+                onStudy={setStudyModule}
+                onDelete={setModuleToDelete}
+              />
+            ))}
+          </div>
+        ) : null}
+      </div>
 
       <ConfirmModal
         open={moduleToDelete !== null}
@@ -141,6 +162,18 @@ This cannot be undone.`
       <StudyModeModal module={studyModule} onClose={() => setStudyModule(null)} />
     </div>
   )
+}
+
+function heroLead(moduleCount: number): string {
+  if (moduleCount === 0) {
+    return 'Add your lecture files and Maowi turns them into questions you can study.'
+  }
+
+  if (moduleCount === 1) {
+    return 'You have one module ready to study.'
+  }
+
+  return `You have ${moduleCount} modules ready to study.`
 }
 
 function readErrorMessage(error: unknown): string | null {
