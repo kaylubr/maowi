@@ -1,4 +1,5 @@
 import { screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { renderApp, stubApi } from './helpers'
@@ -40,5 +41,43 @@ describe('landing page', () => {
     expect(
       screen.getByRole('link', { name: /create a free account/i }),
     ).toHaveAttribute('href', '/register')
+  })
+
+  it('swaps the sample question when another study mode is selected', async () => {
+    const api = stubApi([])
+    const user = userEvent.setup()
+
+    renderApp('/')
+
+    expect(
+      screen.getByRole('tab', { name: 'Flashcard' }),
+    ).toHaveAttribute('aria-selected', 'true')
+    expect(screen.queryByText('Ribosome')).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('tab', { name: 'Multiple Choice' }))
+
+    expect(
+      screen.getByRole('tab', { name: 'Multiple Choice' }),
+    ).toHaveAttribute('aria-selected', 'true')
+    expect(screen.getByText('Ribosome')).toBeInTheDocument()
+    expect(api.calls).toEqual([])
+  })
+
+  it('points the footer at the page sections and the auth pages', () => {
+    stubApi([])
+
+    renderApp('/')
+
+    expect(screen.getByRole('link', { name: 'How it works' })).toHaveAttribute(
+      'href',
+      '#how-it-works',
+    )
+    expect(screen.getByRole('link', { name: 'Study modes' })).toHaveAttribute(
+      'href',
+      '#study-modes',
+    )
+    expect(
+      screen.getByRole('link', { name: 'Log in to your account' }),
+    ).toHaveAttribute('href', '/login')
   })
 })
