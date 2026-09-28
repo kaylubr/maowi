@@ -26,12 +26,12 @@ export function RegisterPage() {
 
   return (
     <main className="container min-vh-100 d-flex flex-column justify-content-center py-5">
+      <div className="position-fixed top-0 start-0 m-3">
+        <BackButton />
+      </div>
+
       <div className="row justify-content-center">
         <div className="col-12 col-md-6 col-lg-5">
-          <div className="mb-3">
-            <BackButton />
-          </div>
-
           <div className="card">
             <div className="card-body p-4">
               <h1 className="card-title h3 mb-4">Create account</h1>
