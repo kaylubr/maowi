@@ -62,7 +62,7 @@ describe('apiFetch', () => {
     const form = new FormData()
     form.append('uploads', new Blob(['x']), 'notes.docx')
 
-    await apiFetch('/api/files', { method: 'POST', body: form })
+    await apiFetch('/api/modules/creations', { method: 'POST', body: form })
 
     const [, options] = fetchMock.mock.calls[0]
     expect(options.headers).toBeUndefined()
@@ -71,7 +71,7 @@ describe('apiFetch', () => {
   it('throws an ApiError carrying the parsed error body', async () => {
     mockFetch(jsonResponse({ detail: 'At most 5 files per upload' }, 400))
 
-    const error = await apiFetch('/api/files', { method: 'POST' }).catch(
+    const error = await apiFetch('/api/modules/creations', { method: 'POST' }).catch(
       (thrown: unknown) => thrown,
     )
 

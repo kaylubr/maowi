@@ -7,6 +7,5 @@ class Base(DeclarativeBase):
 
 import server.modules.models
 import server.attempts.models
-import server.files.models
 import server.questions.models
 import server.users.models

@@ -1,34 +1,24 @@
 import { apiFetch } from './client'
 
 export const MODULES_QUERY_KEY = ['modules'] as const
-
-export type ModuleStatus = 'draft' | 'generating' | 'ready' | 'failed'
+export const MODULE_CREATIONS_QUERY_KEY = ['moduleCreations'] as const
 
 export type StudyModule = {
   id: number
   name: string
-  status: ModuleStatus
-  error_message: string | null
 }
 
-export type ModuleStatusRead = {
+export type CreationStatus = 'generating' | 'ready' | 'error'
+
+export type ModuleCreation = {
   id: number
-  status: ModuleStatus
+  status: CreationStatus
+  module_id: number | null
   error_message: string | null
 }
 
 export function listModules(): Promise<StudyModule[]> {
   return apiFetch<StudyModule[]>('/api/modules')
-}
-
-export function createModule(
-  name: string,
-  fileIds: number[],
-): Promise<StudyModule> {
-  return apiFetch<StudyModule>('/api/modules', {
-    method: 'POST',
-    body: JSON.stringify({ name, file_ids: fileIds }),
-  })
 }
 
 export function renameModule(
@@ -45,22 +35,22 @@ export function deleteModule(moduleId: number): Promise<null> {
   return apiFetch<null>(`/api/modules/${moduleId}`, { method: 'DELETE' })
 }
 
-export function mergeModules(
-  moduleId: number,
-  targetModuleId: number,
-): Promise<StudyModule> {
-  return apiFetch<StudyModule>(`/api/modules/${moduleId}/merge`, {
+export function startModuleCreation(
+  name: string,
+  files: File[],
+): Promise<ModuleCreation> {
+  const form = new FormData()
+  form.append('name', name)
+  for (const file of files) {
+    form.append('uploads', file)
+  }
+
+  return apiFetch<ModuleCreation>('/api/modules/creations', {
     method: 'POST',
-    body: JSON.stringify({ target_module_id: targetModuleId }),
+    body: form,
   })
 }
 
-export function generateModuleQuestions(moduleId: number): Promise<StudyModule> {
-  return apiFetch<StudyModule>(`/api/modules/${moduleId}/generate`, {
-    method: 'POST',
-  })
-}
-
-export function fetchModuleStatus(moduleId: number): Promise<ModuleStatusRead> {
-  return apiFetch<ModuleStatusRead>(`/api/modules/${moduleId}/status`)
+export function fetchModuleCreation(creationId: number): Promise<ModuleCreation> {
+  return apiFetch<ModuleCreation>(`/api/modules/creations/${creationId}`)
 }

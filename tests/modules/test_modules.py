@@ -1,13 +1,15 @@
+from datetime import datetime, timedelta, timezone
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import select
 
-from server.files.models import File
+from server.config import settings
 from server.modules import service as modules_service
-from server.modules.models import Module
+from server.modules.models import Module, ModuleCreation
 from server.questions import service as questions_service
 from server.questions.models import Question
-from tests.files.fixtures import build_docx
+from tests.fixtures import build_docx
 
 GENERATED_QUESTION = {
     "prompt": "What is the capital of Australia?",
@@ -18,6 +20,8 @@ GENERATED_QUESTION = {
 EMAIL = "student@example.com"
 PASSWORD = "correct-horse-battery"
 
+CREATIONS_PATH = "/api/modules/creations"
+
 
 def authenticate(client: TestClient, email: str = EMAIL) -> int:
     client.post("/api/auth/register", json={"email": email, "password": PASSWORD})
@@ -25,215 +29,229 @@ def authenticate(client: TestClient, email: str = EMAIL) -> int:
     return client.get("/api/users/me").json()["id"]
 
 
-def upload(client: TestClient, files: list[tuple[str, bytes]]):
-    return client.post(
-        "/api/files",
-        files=[
-            ("uploads", (filename, content, "application/octet-stream"))
-            for filename, content in files
-        ],
+def stub_questions(monkeypatch, questions=None) -> None:
+    from server.questions import generation
+
+    payload = [GENERATED_QUESTION] if questions is None else questions
+    monkeypatch.setattr(
+        generation, "generate_json", lambda prompt: {"questions": payload}
     )
 
 
-def group_files_into_one_module(monkeypatch, name: str = "Cell Biology") -> None:
-    from server.modules import clustering
-
-    def fake_cluster_files(existing_modules, new_files):
-        return [
-            {"file_id": str(file.id), "new_module_name": name} for file in new_files
-        ]
-
-    monkeypatch.setattr(clustering, "cluster_files", fake_cluster_files)
-
-
-def match_only_existing_module(monkeypatch, module_id: int) -> None:
-    from server.modules import clustering
-
-    def fake_cluster_files(existing_modules, new_files):
-        return [
-            {"file_id": str(file.id), "existing_module_id": str(module_id)}
-            for file in new_files
-        ]
-
-    monkeypatch.setattr(clustering, "cluster_files", fake_cluster_files)
+def start_creation(
+    client: TestClient,
+    name: str = "Cell Biology",
+    files: list[tuple[str, bytes]] | None = None,
+):
+    chosen = files or [("notes.docx", build_docx("Mitochondria"))]
+    return client.post(
+        CREATIONS_PATH,
+        data={"name": name},
+        files=[
+            ("uploads", (filename, content, "application/octet-stream"))
+            for filename, content in chosen
+        ],
+    )
 
 
 def test_list_modules_requires_authentication(client):
     assert client.get("/api/modules").status_code == 401
 
 
-def test_upload_groups_files_into_a_draft_module(client, db_session, monkeypatch):
-    group_files_into_one_module(monkeypatch)
+def test_creation_requires_authentication(client):
+    response = start_creation(client)
+
+    assert response.status_code == 401
+
+
+def test_creation_requires_a_name(client):
     authenticate(client)
 
-    created = upload(
+    response = client.post(
+        CREATIONS_PATH,
+        files=[("uploads", ("notes.docx", build_docx("x"), "application/octet-stream"))],
+    )
+
+    assert response.status_code == 422
+
+
+def test_creation_rejects_a_blank_name(client):
+    authenticate(client)
+
+    assert start_creation(client, name="").status_code == 422
+
+
+def test_creation_requires_at_least_one_file(client):
+    authenticate(client)
+
+    response = client.post(CREATIONS_PATH, data={"name": "Cell Biology"})
+
+    assert response.status_code == 422
+
+
+def test_creation_rejects_more_than_five_files(client):
+    authenticate(client)
+    too_many = [(f"notes-{index}.docx", build_docx("x")) for index in range(6)]
+
+    response = start_creation(client, files=too_many)
+
+    assert response.status_code == 400
+
+
+def test_creation_rejects_an_unsupported_file_type(client):
+    authenticate(client)
+
+    response = start_creation(client, files=[("notes.txt", b"plain text")])
+
+    assert response.status_code == 400
+
+
+def test_creation_rejects_an_oversized_file(client, monkeypatch):
+    monkeypatch.setattr(settings, "max_upload_file_bytes", 8)
+    authenticate(client)
+
+    response = start_creation(client, files=[("notes.docx", build_docx("x" * 50))])
+
+    assert response.status_code == 400
+    assert "notes.docx" in response.json()["detail"]
+
+
+def test_creation_builds_a_module_with_questions(client, monkeypatch):
+    stub_questions(monkeypatch)
+    authenticate(client)
+
+    response = start_creation(
         client,
-        [
+        name="Cell Biology",
+        files=[
             ("lecture.docx", build_docx("Mitochondria")),
             ("notes.docx", build_docx("Ribosome")),
         ],
-    ).json()
-
-    modules = client.get("/api/modules").json()
-    assert len(modules) == 1
-    assert modules[0]["name"] == "Cell Biology"
-    assert modules[0]["status"] == "draft"
-
-    assigned = [db_session.get(File, entry["id"]).module_id for entry in created]
-    assert assigned == [modules[0]["id"], modules[0]["id"]]
-
-
-def test_upload_puts_same_new_module_name_in_one_module(client, db_session, monkeypatch):
-    group_files_into_one_module(monkeypatch, name="Photosynthesis")
-    authenticate(client)
-
-    upload(
-        client,
-        [
-            ("a.docx", build_docx("Chlorophyll")),
-            ("b.docx", build_docx("Stomata")),
-            ("c.docx", build_docx("Thylakoid")),
-        ],
     )
 
-    modules = client.get("/api/modules").json()
-    assert [module["name"] for module in modules] == ["Photosynthesis"]
+    assert response.status_code == 202
+    creation = response.json()
+    assert creation["status"] == "generating"
 
-
-def test_upload_matches_existing_module(client, db_session, monkeypatch):
-    user_id = authenticate(client)
-    existing = modules_service.create_module(db_session, user_id, "Cell Biology")
-    match_only_existing_module(monkeypatch, existing.id)
-
-    created = upload(client, [("notes.docx", build_docx("Ribosome"))]).json()
+    status = client.get(f"{CREATIONS_PATH}/{creation['id']}").json()
+    assert status["status"] == "ready"
+    assert status["error_message"] is None
+    assert status["module_id"] is not None
 
     modules = client.get("/api/modules").json()
-    assert [module["id"] for module in modules] == [existing.id]
-    assert db_session.get(File, created[0]["id"]).module_id == existing.id
+    assert modules == [{"id": status["module_id"], "name": "Cell Biology"}]
+
+    questions = client.get(
+        f"/api/modules/{status['module_id']}/questions?mode=flashcard"
+    ).json()
+    assert [question["answer"] for question in questions] == ["Canberra"]
 
 
-def test_clustering_failure_does_not_break_upload(client, monkeypatch):
-    from server.modules import clustering
+def test_creation_sends_parsed_file_text_to_the_model(client, monkeypatch):
+    from server.questions import generation
 
-    def exploding_cluster_files(existing_modules, new_files):
+    prompts: list[str] = []
+
+    def capture_prompt(prompt):
+        prompts.append(prompt)
+        return {"questions": [GENERATED_QUESTION]}
+
+    monkeypatch.setattr(generation, "generate_json", capture_prompt)
+    authenticate(client)
+
+    start_creation(client, files=[("notes.docx", build_docx("Krebs cycle"))])
+
+    assert "Krebs cycle" in prompts[0]
+
+
+def test_creation_marks_error_when_generation_fails(client, monkeypatch):
+    from server.questions import generation
+
+    def explode(prompt):
         raise RuntimeError("gemini exploded")
 
-    monkeypatch.setattr(clustering, "cluster_files", exploding_cluster_files)
+    monkeypatch.setattr(generation, "generate_json", explode)
     authenticate(client)
 
-    response = upload(client, [("notes.docx", build_docx("Ribosome"))])
+    creation = start_creation(client).json()
+    status = client.get(f"{CREATIONS_PATH}/{creation['id']}").json()
 
-    assert response.status_code == 201
+    assert status["status"] == "error"
+    assert "gemini exploded" in status["error_message"]
+    assert status["module_id"] is None
     assert client.get("/api/modules").json() == []
 
 
-def test_failed_parse_is_not_clustered(client, db_session, monkeypatch):
-    group_files_into_one_module(monkeypatch)
+def test_creation_marks_error_when_no_questions_come_back(client, monkeypatch):
+    stub_questions(monkeypatch, questions=[])
     authenticate(client)
 
-    created = upload(client, [("notes.docx", b"not a docx")]).json()
+    creation = start_creation(client).json()
+    status = client.get(f"{CREATIONS_PATH}/{creation['id']}").json()
 
+    assert status["status"] == "error"
+    assert status["error_message"]
+
+
+def test_creation_marks_error_when_a_file_cannot_be_parsed(client):
+    authenticate(client)
+
+    creation = start_creation(
+        client, files=[("broken.docx", b"this is not a docx")]
+    ).json()
+    status = client.get(f"{CREATIONS_PATH}/{creation['id']}").json()
+
+    assert status["status"] == "error"
+    assert "broken.docx" in status["error_message"]
     assert client.get("/api/modules").json() == []
-    assert db_session.get(File, created[0]["id"]).module_id is None
 
 
-def test_assignment_failure_leaves_no_modules(
-    client, db_session, session_factory, monkeypatch
-):
+def test_creation_status_requires_authentication(client, db_session):
     user_id = authenticate(client)
-    created = upload(
-        client,
-        [("a.docx", build_docx("alpha")), ("b.docx", build_docx("beta"))],
-    ).json()
-    file_ids = [entry["id"] for entry in created]
+    creation = modules_service.create_creation(db_session, user_id)
+    client.cookies.clear()
 
-    original_add_module = modules_service.add_module
-    calls = {"count": 0}
+    response = client.get(f"{CREATIONS_PATH}/{creation.id}")
 
-    def flaky_add_module(db, owner_id, name):
-        calls["count"] += 1
-        if calls["count"] == 2:
-            raise RuntimeError("assignment exploded")
-        return original_add_module(db, owner_id, name)
-
-    monkeypatch.setattr(modules_service, "add_module", flaky_add_module)
-
-    assignments = [
-        {"file_id": str(file_ids[0]), "new_module_name": "First"},
-        {"file_id": str(file_ids[1]), "new_module_name": "Second"},
-    ]
-
-    with pytest.raises(RuntimeError):
-        modules_service.apply_assignments(db_session, user_id, assignments)
-
-    db_session.rollback()
-
-    with session_factory() as fresh_session:
-        assert fresh_session.scalars(select(Module)).all() == []
+    assert response.status_code == 401
 
 
-def test_create_module_assigns_selected_files(client, db_session):
-    authenticate(client)
-    created = upload(
-        client,
-        [("a.docx", build_docx("alpha")), ("b.docx", build_docx("beta"))],
-    ).json()
-    file_ids = [entry["id"] for entry in created]
-
-    response = client.post(
-        "/api/modules", json={"name": "Cell Biology", "file_ids": file_ids}
-    )
-
-    assert response.status_code == 201
-    body = response.json()
-    assert body["name"] == "Cell Biology"
-    assert body["status"] == "draft"
-    assert [db_session.get(File, file_id).module_id for file_id in file_ids] == [
-        body["id"],
-        body["id"],
-    ]
-
-
-def test_create_module_without_files(client):
-    authenticate(client)
-
-    response = client.post("/api/modules", json={"name": "Empty Module"})
-
-    assert response.status_code == 201
-    assert response.json()["status"] == "draft"
-
-
-def test_create_module_rejects_unknown_file(client):
-    authenticate(client)
-
-    response = client.post("/api/modules", json={"name": "X", "file_ids": [9999]})
-
-    assert response.status_code == 404
-
-
-def test_create_module_rejects_other_users_file(client):
-    authenticate(client, "owner@example.com")
-    created = upload(client, [("a.docx", build_docx("alpha"))]).json()
+def test_creation_status_hides_other_users_creations(client, db_session):
+    owner_id = authenticate(client, "owner@example.com")
+    creation = modules_service.create_creation(db_session, owner_id)
     client.cookies.clear()
     authenticate(client, "intruder@example.com")
 
-    response = client.post(
-        "/api/modules", json={"name": "X", "file_ids": [created[0]["id"]]}
-    )
+    response = client.get(f"{CREATIONS_PATH}/{creation.id}")
 
     assert response.status_code == 404
 
 
-def test_create_module_rejects_blank_name(client):
-    authenticate(client)
+def test_reaping_removes_stale_creations(client, db_session, session_factory):
+    user_id = authenticate(client)
+    creation = modules_service.create_creation(db_session, user_id)
+    creation_id = creation.id
+    creation.created_at = datetime.now(timezone.utc) - timedelta(hours=2)
+    db_session.commit()
 
-    assert client.post("/api/modules", json={"name": ""}).status_code == 422
+    modules_service.reap_stale_creations(db_session)
+
+    with session_factory() as fresh_session:
+        assert fresh_session.get(ModuleCreation, creation_id) is None
 
 
-def test_create_module_requires_authentication(client):
-    client.cookies.clear()
+def test_startup_sweep_marks_orphaned_creations_as_error(client, db_session):
+    from server.modules.tasks import sweep_orphaned_creations
 
-    assert client.post("/api/modules", json={"name": "X"}).status_code == 401
+    user_id = authenticate(client)
+    creation = modules_service.create_creation(db_session, user_id)
+
+    sweep_orphaned_creations()
+
+    db_session.expire_all()
+    orphaned = db_session.get(ModuleCreation, creation.id)
+    assert orphaned.status == "error"
+    assert orphaned.error_message
 
 
 def test_rename_module(client, db_session):
@@ -243,10 +261,10 @@ def test_rename_module(client, db_session):
     response = client.patch(f"/api/modules/{module.id}", json={"name": "New Name"})
 
     assert response.status_code == 200
-    assert response.json()["name"] == "New Name"
+    assert response.json() == {"id": module.id, "name": "New Name"}
 
 
-def test_rename_rejects_blank_name(client, db_session):
+def test_rename_rejects_a_blank_name(client, db_session):
     user_id = authenticate(client)
     module = modules_service.create_module(db_session, user_id, "Old Name")
 
@@ -275,111 +293,21 @@ def test_list_modules_excludes_other_users(client, db_session):
     assert client.get("/api/modules").json() == []
 
 
-def test_merge_moves_files_and_deletes_source(client, db_session, session_factory):
-    user_id = authenticate(client)
-    source = modules_service.create_module(db_session, user_id, "Source")
-    target = modules_service.create_module(db_session, user_id, "Target")
-    file_id = upload(client, [("notes.docx", build_docx("Ribosome"))]).json()[0]["id"]
-    client.patch(f"/api/files/{file_id}", json={"module_id": source.id})
-
-    response = client.post(
-        f"/api/modules/{source.id}/merge", json={"target_module_id": target.id}
-    )
-
-    assert response.status_code == 200
-    assert response.json()["id"] == target.id
-    assert response.json()["name"] == "Target"
-
-    with session_factory() as fresh_session:
-        assert fresh_session.get(File, file_id).module_id == target.id
-        assert fresh_session.get(Module, source.id) is None
-
-
-def test_merge_moves_questions(client, db_session, session_factory):
-    user_id = authenticate(client)
-    source = modules_service.create_module(db_session, user_id, "Source")
-    target = modules_service.create_module(db_session, user_id, "Target")
-    questions_service.create_questions(db_session, source, [GENERATED_QUESTION])
-
-    response = client.post(
-        f"/api/modules/{source.id}/merge", json={"target_module_id": target.id}
-    )
-
-    assert response.status_code == 200
-    with session_factory() as fresh_session:
-        moved = fresh_session.scalars(
-            select(Question).where(Question.module_id == target.id)
-        ).all()
-        assert len(moved) == 1
-        assert moved[0].answer == "Canberra"
-
-
-def test_merge_rejects_self_target(client, db_session):
-    user_id = authenticate(client)
-    module = modules_service.create_module(db_session, user_id, "Only")
-
-    response = client.post(
-        f"/api/modules/{module.id}/merge", json={"target_module_id": module.id}
-    )
-
-    assert response.status_code == 400
-
-
-def test_merge_hides_other_users_target(client, db_session):
-    owner_id = authenticate(client, "owner@example.com")
-    source = modules_service.create_module(db_session, owner_id, "Source")
-    client.cookies.clear()
-    intruder_id = authenticate(client, "intruder@example.com")
-    target = modules_service.create_module(db_session, intruder_id, "Intruder Target")
-
-    response = client.post(
-        f"/api/modules/{source.id}/merge", json={"target_module_id": target.id}
-    )
-
-    assert response.status_code == 404
-
-
-def test_module_status(client, db_session):
-    user_id = authenticate(client)
-    module = modules_service.create_module(db_session, user_id, "Module")
-
-    response = client.get(f"/api/modules/{module.id}/status")
-
-    assert response.status_code == 200
-    assert response.json() == {
-        "id": module.id,
-        "status": "draft",
-        "error_message": None,
-    }
-
-
-def test_delete_module_removes_it_and_unassigns_files(
+def test_delete_module_removes_it_and_its_questions(
     client, db_session, session_factory
 ):
     user_id = authenticate(client)
     module = modules_service.create_module(db_session, user_id, "Cell Biology")
-    file_id = upload(client, [("notes.docx", build_docx("Ribosome"))]).json()[0]["id"]
-    client.patch(f"/api/files/{file_id}", json={"module_id": module.id})
-
-    response = client.delete(f"/api/modules/{module.id}")
-
-    assert response.status_code == 204
-    with session_factory() as fresh_session:
-        assert fresh_session.get(Module, module.id) is None
-        assert fresh_session.get(File, file_id).module_id is None
-
-
-def test_delete_module_removes_its_questions(client, db_session, session_factory):
-    user_id = authenticate(client)
-    module = modules_service.create_module(db_session, user_id, "Cell Biology")
     questions_service.create_questions(db_session, module, [GENERATED_QUESTION])
+    module_id = module.id
 
-    response = client.delete(f"/api/modules/{module.id}")
+    response = client.delete(f"/api/modules/{module_id}")
 
     assert response.status_code == 204
     with session_factory() as fresh_session:
+        assert fresh_session.get(Module, module_id) is None
         remaining = fresh_session.scalars(
-            select(Question).where(Question.module_id == module.id)
+            select(Question).where(Question.module_id == module_id)
         ).all()
         assert remaining == []
 

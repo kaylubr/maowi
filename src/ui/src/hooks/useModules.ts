@@ -1,41 +1,43 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
-import { FILES_QUERY_KEY } from '../api/files'
 import * as modulesApi from '../api/modules'
-import type { StudyModule } from '../api/modules'
-import { MODULES_QUERY_KEY } from '../api/modules'
+import type { ModuleCreation } from '../api/modules'
+import { MODULE_CREATIONS_QUERY_KEY, MODULES_QUERY_KEY } from '../api/modules'
 
 const POLL_INTERVAL_MS = 3000
 
-export function hasUnfinishedModules(modules: StudyModule[]): boolean {
-  return modules.some(
-    (module) => module.status === 'draft' || module.status === 'generating',
-  )
+export function isCreationPending(
+  creation: ModuleCreation | undefined,
+): boolean {
+  return creation?.status === 'generating'
 }
 
 export function useModules() {
   return useQuery({
     queryKey: MODULES_QUERY_KEY,
     queryFn: modulesApi.listModules,
-    refetchInterval: (query) =>
-      hasUnfinishedModules(query.state.data ?? []) ? POLL_INTERVAL_MS : false,
   })
 }
 
-function invalidateModuleAndFileLists(
-  queryClient: ReturnType<typeof useQueryClient>,
-) {
-  void queryClient.invalidateQueries({ queryKey: MODULES_QUERY_KEY })
-  void queryClient.invalidateQueries({ queryKey: FILES_QUERY_KEY })
+export function useModuleCreation(creationId: number | null) {
+  return useQuery({
+    queryKey: [...MODULE_CREATIONS_QUERY_KEY, creationId],
+    queryFn: () => modulesApi.fetchModuleCreation(creationId as number),
+    enabled: creationId !== null,
+    refetchInterval: (query) =>
+      isCreationPending(query.state.data) ? POLL_INTERVAL_MS : false,
+  })
 }
 
-export function useCreateModule() {
+export function useStartModuleCreation() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ name, fileIds }: { name: string; fileIds: number[] }) =>
-      modulesApi.createModule(name, fileIds),
-    onSuccess: () => invalidateModuleAndFileLists(queryClient),
+    mutationFn: ({ name, files }: { name: string; files: File[] }) =>
+      modulesApi.startModuleCreation(name, files),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: MODULES_QUERY_KEY })
+    },
   })
 }
 
@@ -45,7 +47,9 @@ export function useRenameModule() {
   return useMutation({
     mutationFn: ({ moduleId, name }: { moduleId: number; name: string }) =>
       modulesApi.renameModule(moduleId, name),
-    onSuccess: () => invalidateModuleAndFileLists(queryClient),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: MODULES_QUERY_KEY })
+    },
   })
 }
 
@@ -54,30 +58,8 @@ export function useDeleteModule() {
 
   return useMutation({
     mutationFn: modulesApi.deleteModule,
-    onSuccess: () => invalidateModuleAndFileLists(queryClient),
-  })
-}
-
-export function useMergeModules() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: ({
-      moduleId,
-      targetModuleId,
-    }: {
-      moduleId: number
-      targetModuleId: number
-    }) => modulesApi.mergeModules(moduleId, targetModuleId),
-    onSuccess: () => invalidateModuleAndFileLists(queryClient),
-  })
-}
-
-export function useGenerateModuleQuestions() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: modulesApi.generateModuleQuestions,
-    onSuccess: () => invalidateModuleAndFileLists(queryClient),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: MODULES_QUERY_KEY })
+    },
   })
 }

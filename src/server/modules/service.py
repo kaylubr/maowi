@@ -1,22 +1,15 @@
-from sqlalchemy import select, update
+from datetime import datetime, timedelta, timezone
+
+from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
-from server.files.models import File
-from server.modules.models import Module, ModuleStatus
-from server.questions.models import Question
+from server.modules.models import Module, ModuleCreation, ModuleCreationStatus
 
-
-def as_int(value: object) -> int | None:
-    try:
-        return int(value)
-    except (TypeError, ValueError):
-        return None
+CREATION_TTL_HOURS = 1
 
 
 def list_modules(db: Session, user_id: int) -> list[Module]:
-    statement = (
-        select(Module).where(Module.user_id == user_id).order_by(Module.id)
-    )
+    statement = select(Module).where(Module.user_id == user_id).order_by(Module.id)
     return list(db.scalars(statement))
 
 
@@ -27,24 +20,9 @@ def get_user_module(db: Session, user_id: int, module_id: int) -> Module | None:
     return db.scalar(statement)
 
 
-def add_module(db: Session, user_id: int, name: str) -> Module:
-    module = Module(user_id=user_id, name=name, status=ModuleStatus.draft)
+def create_module(db: Session, user_id: int, name: str) -> Module:
+    module = Module(user_id=user_id, name=name)
     db.add(module)
-    db.flush()
-    return module
-
-
-def create_module(
-    db: Session,
-    user_id: int,
-    name: str,
-    files: list[File] | None = None,
-) -> Module:
-    module = add_module(db, user_id, name)
-
-    for file in files or []:
-        file.module_id = module.id
-
     db.commit()
     db.refresh(module)
     return module
@@ -62,56 +40,26 @@ def delete_module(db: Session, module: Module) -> None:
     db.commit()
 
 
-def merge_modules(db: Session, source: Module, target: Module) -> Module:
-    db.execute(
-        update(File).where(File.module_id == source.id).values(module_id=target.id)
+def create_creation(db: Session, user_id: int) -> ModuleCreation:
+    creation = ModuleCreation(
+        user_id=user_id, status=ModuleCreationStatus.generating
     )
-    db.execute(
-        update(Question)
-        .where(Question.module_id == source.id)
-        .values(module_id=target.id)
-    )
-    db.delete(source)
+    db.add(creation)
     db.commit()
-    db.refresh(target)
-    return target
+    db.refresh(creation)
+    return creation
 
 
-def apply_assignments(db: Session, user_id: int, assignments: list[dict]) -> None:
-    own_module_ids = {module.id for module in list_modules(db, user_id)}
-    modules_by_name: dict[str, Module] = {}
+def get_user_creation(
+    db: Session, user_id: int, creation_id: int
+) -> ModuleCreation | None:
+    statement = select(ModuleCreation).where(
+        ModuleCreation.id == creation_id, ModuleCreation.user_id == user_id
+    )
+    return db.scalar(statement)
 
-    for assignment in assignments:
-        if not isinstance(assignment, dict):
-            continue
 
-        file_id = as_int(assignment.get("file_id"))
-        if file_id is None:
-            continue
-
-        file = db.scalar(
-            select(File).where(File.id == file_id, File.user_id == user_id)
-        )
-        if file is None:
-            continue
-
-        existing_module_id = as_int(assignment.get("existing_module_id"))
-        if existing_module_id in own_module_ids:
-            file.module_id = existing_module_id
-            continue
-
-        new_module_name = assignment.get("new_module_name")
-        if not isinstance(new_module_name, str):
-            continue
-        name = new_module_name.strip()
-        if not name:
-            continue
-
-        module = modules_by_name.get(name)
-        if module is None:
-            module = add_module(db, user_id, name)
-            modules_by_name[name] = module
-
-        file.module_id = module.id
-
+def reap_stale_creations(db: Session) -> None:
+    cutoff = datetime.now(timezone.utc) - timedelta(hours=CREATION_TTL_HOURS)
+    db.execute(delete(ModuleCreation).where(ModuleCreation.created_at < cutoff))
     db.commit()

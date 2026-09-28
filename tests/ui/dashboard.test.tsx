@@ -2,11 +2,9 @@ import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import type { UploadedFile } from '../../src/ui/src/api/files'
-import type { StudyModule } from '../../src/ui/src/api/modules'
-import { hasUnfinishedFiles } from '../../src/ui/src/hooks/useFiles'
-import { hasUnfinishedModules } from '../../src/ui/src/hooks/useModules'
+import type { ModuleCreation, StudyModule } from '../../src/ui/src/api/modules'
 import { renderApp, stubApi } from './helpers'
+import type { StubResponse } from './helpers'
 
 const USER = {
   id: 1,
@@ -14,48 +12,26 @@ const USER = {
   created_at: '2026-01-01T00:00:00Z',
 }
 
-const DRAFT_MODULE: StudyModule = {
-  id: 10,
-  name: 'Cell Biology',
-  status: 'draft',
-  error_message: null,
+const CELL_BIOLOGY: StudyModule = { id: 10, name: 'Cell Biology' }
+const PHOTOSYNTHESIS: StudyModule = { id: 11, name: 'Photosynthesis' }
+
+const CREATIONS_PATH = '/api/modules/creations'
+
+function creation(id: number, body: Partial<ModuleCreation>): ModuleCreation {
+  return {
+    id,
+    status: 'generating',
+    module_id: null,
+    error_message: null,
+    ...body,
+  }
 }
 
-const READY_MODULE: StudyModule = {
-  id: 11,
-  name: 'Photosynthesis',
-  status: 'ready',
-  error_message: null,
-}
-
-const PARSED_FILE: UploadedFile = {
-  id: 100,
-  filename: 'lecture.pdf',
-  file_type: 'pdf',
-  status: 'parsed',
-  error_message: null,
-  module_id: null,
-}
-
-const ASSIGNED_FILE: UploadedFile = {
-  ...PARSED_FILE,
-  id: 101,
-  filename: 'assigned.docx',
-  module_id: DRAFT_MODULE.id,
-}
-
-const PARSING_FILE: UploadedFile = {
-  ...PARSED_FILE,
-  id: 102,
-  filename: 'still-parsing.pptx',
-  status: 'parsing',
-}
-
-function stubDashboard(modules: StudyModule[], files: UploadedFile[]) {
+function stubDashboard(modules: StudyModule[], extra: StubResponse[] = []) {
   return stubApi([
     { path: '/api/users/me', body: USER },
     { path: '/api/modules', body: modules },
-    { path: '/api/files', body: files },
+    ...extra,
   ])
 }
 
@@ -64,178 +40,196 @@ afterEach(() => {
 })
 
 describe('dashboard', () => {
-  it('lists modules with their status', async () => {
-    stubDashboard([DRAFT_MODULE, READY_MODULE], [])
+  it('lists modules', async () => {
+    stubDashboard([CELL_BIOLOGY, PHOTOSYNTHESIS])
 
     renderApp('/dashboard')
 
     expect(await screen.findByText('Cell Biology')).toBeInTheDocument()
-    expect(screen.getByText('Draft')).toBeInTheDocument()
-    expect(screen.getByText('Ready')).toBeInTheDocument()
+    expect(screen.getByText('Photosynthesis')).toBeInTheDocument()
   })
 
   it('shows an empty state when there are no modules', async () => {
-    stubDashboard([], [])
+    stubDashboard([])
 
     renderApp('/dashboard')
 
     expect(await screen.findByText(/no modules yet/i)).toBeInTheDocument()
   })
 
-  it('lists uploaded files', async () => {
-    stubDashboard([], [PARSED_FILE, PARSING_FILE])
+  it('offers study and delete on every module', async () => {
+    stubDashboard([CELL_BIOLOGY])
 
     renderApp('/dashboard')
 
-    expect(await screen.findByText('lecture.pdf')).toBeInTheDocument()
-    expect(screen.getByText('still-parsing.pptx')).toBeInTheDocument()
-  })
-
-  it('reports a module failure message', async () => {
-    stubDashboard(
-      [{ ...DRAFT_MODULE, status: 'failed', error_message: 'Gemini exploded' }],
-      [],
-    )
-
-    renderApp('/dashboard')
-
-    expect(await screen.findByText('Gemini exploded')).toBeInTheDocument()
+    expect(
+      await screen.findByRole('button', { name: 'Study Cell Biology' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Delete Cell Biology' }),
+    ).toBeInTheDocument()
   })
 })
 
-describe('upload modal', () => {
-  it('rejects a selection larger than the backend cap before calling the api', async () => {
+describe('adding a module', () => {
+  it('rejects a selection larger than the cap before calling the api', async () => {
     const user = userEvent.setup()
-    const api = stubDashboard([], [])
+    const api = stubDashboard([])
     renderApp('/dashboard')
 
-    await user.click(await screen.findByRole('button', { name: 'Upload files' }))
+    await user.click(await screen.findByRole('button', { name: 'Add module' }))
     const tooMany = Array.from(
       { length: 6 },
       (_, index) => new File(['x'], `notes-${index}.pdf`),
     )
-    await user.upload(screen.getByLabelText('Choose files'), tooMany)
+    await user.upload(screen.getByLabelText('Files'), tooMany)
 
     expect(await screen.findByRole('alert')).toHaveTextContent(/at most 5/i)
-    expect(api.calls).not.toContain('POST /api/files')
+    expect(api.calls).not.toContain(`POST ${CREATIONS_PATH}`)
   })
 
-  it('posts the chosen files as multipart form data', async () => {
+  it('posts the name and files as multipart form data', async () => {
     const user = userEvent.setup()
-    const api = stubApi([
-      { path: '/api/users/me', body: USER },
-      { path: '/api/modules', body: [] },
-      { path: '/api/files', body: [] },
-      { method: 'POST', path: '/api/files', status: 201, body: [] },
+    const api = stubDashboard([], [
+      {
+        method: 'POST',
+        path: CREATIONS_PATH,
+        status: 202,
+        body: creation(1, {}),
+      },
+      {
+        path: `${CREATIONS_PATH}/1`,
+        body: creation(1, { status: 'ready', module_id: 12 }),
+      },
     ])
     renderApp('/dashboard')
 
-    await user.click(await screen.findByRole('button', { name: 'Upload files' }))
-    await user.upload(screen.getByLabelText('Choose files'), [
+    await user.click(await screen.findByRole('button', { name: 'Add module' }))
+    const dialog = await screen.findByRole('dialog', { name: 'Add module' })
+    await user.type(within(dialog).getByLabelText('Module name'), 'Cell Biology')
+    await user.upload(within(dialog).getByLabelText('Files'), [
       new File(['a'], 'lecture.pdf'),
       new File(['b'], 'notes.docx'),
     ])
-    await user.click(screen.getByRole('button', { name: 'Upload' }))
-
-    await waitFor(() => expect(api.calls).toContain('POST /api/files'))
-
-    const uploadRequest = api.requests.find(
-      (request) => request.method === 'POST' && request.path === '/api/files',
+    await user.click(
+      within(dialog).getByRole('button', { name: 'Create module' }),
     )
-    const form = uploadRequest?.body as FormData
+
+    await waitFor(() => expect(api.calls).toContain(`POST ${CREATIONS_PATH}`))
+
+    const post = api.requests.find(
+      (request) => request.method === 'POST' && request.path === CREATIONS_PATH,
+    )
+    const form = post?.body as FormData
     expect(form).toBeInstanceOf(FormData)
+    expect(form.get('name')).toBe('Cell Biology')
     expect(form.getAll('uploads')).toHaveLength(2)
   })
 
-  it('surfaces the backend error when the upload is rejected', async () => {
+  it('closes the modal once the module is ready', async () => {
     const user = userEvent.setup()
-    stubApi([
-      { path: '/api/users/me', body: USER },
-      { path: '/api/modules', body: [] },
-      { path: '/api/files', body: [] },
+    stubDashboard([], [
+      { method: 'POST', path: CREATIONS_PATH, status: 202, body: creation(1, {}) },
       {
-        method: 'POST',
-        path: '/api/files',
-        status: 401,
-        body: { detail: 'Not authenticated' },
+        path: `${CREATIONS_PATH}/1`,
+        body: creation(1, { status: 'ready', module_id: 12 }),
       },
     ])
     renderApp('/dashboard')
 
-    await user.click(await screen.findByRole('button', { name: 'Upload files' }))
-    await user.upload(
-      screen.getByLabelText('Choose files'),
-      new File(['x'], 'lecture.pdf'),
-    )
-    await user.click(screen.getByRole('button', { name: 'Upload' }))
-
-    expect(await screen.findByRole('alert')).toHaveTextContent('Not authenticated')
-  })
-})
-
-describe('create module modal', () => {
-  it('offers only parsed files that are not yet in a module', async () => {
-    const user = userEvent.setup()
-    stubDashboard([], [PARSED_FILE, ASSIGNED_FILE, PARSING_FILE])
-    renderApp('/dashboard')
-
-    await user.click(await screen.findByRole('button', { name: 'New module' }))
-
-    const dialog = await screen.findByRole('dialog', { name: 'Create module' })
-    const options = within(dialog).getAllByRole('checkbox')
-    expect(options).toHaveLength(1)
-    expect(within(dialog).getByText('lecture.pdf')).toBeInTheDocument()
-    expect(within(dialog).queryByText('assigned.docx')).not.toBeInTheDocument()
-    expect(within(dialog).queryByText('still-parsing.pptx')).not.toBeInTheDocument()
-  })
-
-  it('creates a module from the selected files', async () => {
-    const user = userEvent.setup()
-    const api = stubApi([
-      { path: '/api/users/me', body: USER },
-      { path: '/api/modules', body: [] },
-      { path: '/api/files', body: [PARSED_FILE] },
-      {
-        method: 'POST',
-        path: '/api/modules',
-        status: 201,
-        body: { id: 12, name: 'Cell Biology', status: 'draft', error_message: null },
-      },
-    ])
-    renderApp('/dashboard')
-
-    await user.click(await screen.findByRole('button', { name: 'New module' }))
-    const dialog = await screen.findByRole('dialog', { name: 'Create module' })
+    await user.click(await screen.findByRole('button', { name: 'Add module' }))
+    const dialog = await screen.findByRole('dialog', { name: 'Add module' })
     await user.type(within(dialog).getByLabelText('Module name'), 'Cell Biology')
-    await user.click(within(dialog).getByRole('checkbox'))
-    await user.click(within(dialog).getByRole('button', { name: 'Create' }))
-
-    await waitFor(() => expect(api.calls).toContain('POST /api/modules'))
-
-    const createRequest = api.requests.find(
-      (request) => request.method === 'POST' && request.path === '/api/modules',
+    await user.upload(within(dialog).getByLabelText('Files'), [
+      new File(['a'], 'lecture.pdf'),
+    ])
+    await user.click(
+      within(dialog).getByRole('button', { name: 'Create module' }),
     )
-    expect(JSON.parse(String(createRequest?.body))).toEqual({
-      name: 'Cell Biology',
-      file_ids: [PARSED_FILE.id],
-    })
-  })
-})
 
-describe('status polling', () => {
-  it('keeps polling only while files are still being parsed', () => {
-    expect(hasUnfinishedFiles([PARSED_FILE])).toBe(false)
-    expect(hasUnfinishedFiles([PARSING_FILE])).toBe(true)
-    expect(hasUnfinishedFiles([{ ...PARSED_FILE, status: 'uploaded' }])).toBe(true)
-    expect(hasUnfinishedFiles([{ ...PARSED_FILE, status: 'failed' }])).toBe(false)
+    await waitFor(() =>
+      expect(
+        screen.queryByRole('dialog', { name: 'Add module' }),
+      ).not.toBeInTheDocument(),
+    )
   })
 
-  it('keeps polling only while modules are draft or generating', () => {
-    expect(hasUnfinishedModules([READY_MODULE])).toBe(false)
-    expect(hasUnfinishedModules([DRAFT_MODULE])).toBe(true)
-    expect(hasUnfinishedModules([{ ...READY_MODULE, status: 'generating' }])).toBe(
-      true,
+  it('reports progress while the questions are being written', async () => {
+    const user = userEvent.setup()
+    stubDashboard([], [
+      { method: 'POST', path: CREATIONS_PATH, status: 202, body: creation(1, {}) },
+      { path: `${CREATIONS_PATH}/1`, body: creation(1, {}) },
+    ])
+    renderApp('/dashboard')
+
+    await user.click(await screen.findByRole('button', { name: 'Add module' }))
+    const dialog = await screen.findByRole('dialog', { name: 'Add module' })
+    await user.type(within(dialog).getByLabelText('Module name'), 'Cell Biology')
+    await user.upload(within(dialog).getByLabelText('Files'), [
+      new File(['a'], 'lecture.pdf'),
+    ])
+    await user.click(
+      within(dialog).getByRole('button', { name: 'Create module' }),
     )
-    expect(hasUnfinishedModules([{ ...READY_MODULE, status: 'failed' }])).toBe(false)
+
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      /writing study questions/i,
+    )
+  })
+
+  it('surfaces a failed creation with its message', async () => {
+    const user = userEvent.setup()
+    stubDashboard([], [
+      { method: 'POST', path: CREATIONS_PATH, status: 202, body: creation(1, {}) },
+      {
+        path: `${CREATIONS_PATH}/1`,
+        body: creation(1, {
+          status: 'error',
+          error_message: 'Could not read broken.docx',
+        }),
+      },
+    ])
+    renderApp('/dashboard')
+
+    await user.click(await screen.findByRole('button', { name: 'Add module' }))
+    const dialog = await screen.findByRole('dialog', { name: 'Add module' })
+    await user.type(within(dialog).getByLabelText('Module name'), 'Cell Biology')
+    await user.upload(within(dialog).getByLabelText('Files'), [
+      new File(['a'], 'broken.docx'),
+    ])
+    await user.click(
+      within(dialog).getByRole('button', { name: 'Create module' }),
+    )
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Could not read broken.docx',
+    )
+  })
+
+  it('surfaces the backend error when the creation is rejected', async () => {
+    const user = userEvent.setup()
+    stubDashboard([], [
+      {
+        method: 'POST',
+        path: CREATIONS_PATH,
+        status: 400,
+        body: { detail: 'At most 5 files per module' },
+      },
+    ])
+    renderApp('/dashboard')
+
+    await user.click(await screen.findByRole('button', { name: 'Add module' }))
+    const dialog = await screen.findByRole('dialog', { name: 'Add module' })
+    await user.type(within(dialog).getByLabelText('Module name'), 'Cell Biology')
+    await user.upload(within(dialog).getByLabelText('Files'), [
+      new File(['a'], 'lecture.pdf'),
+    ])
+    await user.click(
+      within(dialog).getByRole('button', { name: 'Create module' }),
+    )
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'At most 5 files per module',
+    )
   })
 })

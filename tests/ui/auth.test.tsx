@@ -16,10 +16,7 @@ const UNAUTHENTICATED = {
   body: { detail: 'Not authenticated' },
 }
 
-const DASHBOARD_STUBS = [
-  { path: '/api/modules', body: [] },
-  { path: '/api/files', body: [] },
-]
+const DASHBOARD_STUBS = [{ path: '/api/modules', body: [] }]
 
 afterEach(() => {
   vi.unstubAllGlobals()

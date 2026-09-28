@@ -217,7 +217,6 @@ describe('abandoning an identification attempt', () => {
     const user = userEvent.setup()
     stubQuiz([
       { path: '/api/modules', body: [] },
-      { path: '/api/files', body: [] },
     ])
 
     const { router } = renderApp(`/modules/${MODULE_ID}/identification?count=2`)
@@ -241,7 +240,6 @@ describe('abandoning an identification attempt', () => {
         body: { ...ATTEMPT, score: 0, completed_at: '2026-01-01T00:10:00Z' },
       },
       { path: '/api/modules', body: [] },
-      { path: '/api/files', body: [] },
     ])
 
     const { router } = renderApp(`/modules/${MODULE_ID}/identification?count=2`)

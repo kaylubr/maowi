@@ -3,7 +3,6 @@ import random
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from server.files.models import File
 from server.modules.models import Module
 from server.questions.models import Question
 from server.questions.schemas import QuestionMode
@@ -28,15 +27,6 @@ def list_module_questions(
     if count is None or count >= len(questions):
         return questions
     return random.sample(questions, count)
-
-
-def collect_module_material(db: Session, module: Module) -> str:
-    statement = (
-        select(File)
-        .where(File.module_id == module.id, File.parsed_text.is_not(None))
-        .order_by(File.id)
-    )
-    return "\n\n".join(file.parsed_text for file in db.scalars(statement))
 
 
 def create_questions(

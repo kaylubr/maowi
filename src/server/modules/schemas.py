@@ -1,6 +1,6 @@
 from pydantic import BaseModel, ConfigDict, Field
 
-from server.modules.models import ModuleStatus
+from server.modules.models import ModuleCreationStatus
 
 
 class ModuleRead(BaseModel):
@@ -8,26 +8,16 @@ class ModuleRead(BaseModel):
 
     id: int
     name: str
-    status: ModuleStatus
-    error_message: str | None = None
-
-
-class ModuleStatusRead(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: int
-    status: ModuleStatus
-    error_message: str | None = None
 
 
 class ModuleUpdate(BaseModel):
     name: str = Field(min_length=1, max_length=255)
 
 
-class ModuleCreate(BaseModel):
-    name: str = Field(min_length=1, max_length=255)
-    file_ids: list[int] = Field(default_factory=list)
+class ModuleCreationRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
 
-
-class ModuleMergeRequest(BaseModel):
-    target_module_id: int
+    id: int
+    status: ModuleCreationStatus
+    module_id: int | None = None
+    error_message: str | None = None

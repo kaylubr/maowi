@@ -11,19 +11,9 @@ const USER = {
   created_at: '2026-01-01T00:00:00Z',
 }
 
-const DRAFT_MODULE: StudyModule = {
-  id: 10,
-  name: 'Cell Biology',
-  status: 'draft',
-  error_message: null,
-}
+const CELL_BIOLOGY: StudyModule = { id: 10, name: 'Cell Biology' }
 
-const READY_MODULE: StudyModule = {
-  id: 11,
-  name: 'Photosynthesis',
-  status: 'ready',
-  error_message: null,
-}
+const READY_MODULE: StudyModule = { id: 11, name: 'Photosynthesis' }
 
 const QUESTIONS = [
   { id: 1, prompt: 'What is the capital of Australia?' },
@@ -35,7 +25,6 @@ function stubDashboard(modules: StudyModule[], questions = QUESTIONS) {
   return stubApi([
     { path: '/api/users/me', body: USER },
     { path: '/api/modules', body: modules },
-    { path: '/api/files', body: [] },
     {
       path: `/api/modules/${READY_MODULE.id}/questions?mode=identification`,
       body: questions,
@@ -55,8 +44,8 @@ afterEach(() => {
 })
 
 describe('study mode selection', () => {
-  it('only offers Study on ready modules', async () => {
-    stubDashboard([DRAFT_MODULE, READY_MODULE])
+  it('offers study on every module', async () => {
+    stubDashboard([CELL_BIOLOGY, READY_MODULE])
 
     renderApp('/dashboard')
 
@@ -64,8 +53,8 @@ describe('study mode selection', () => {
       await screen.findByRole('button', { name: 'Study Photosynthesis' }),
     ).toBeInTheDocument()
     expect(
-      screen.queryByRole('button', { name: 'Study Cell Biology' }),
-    ).not.toBeInTheDocument()
+      screen.getByRole('button', { name: 'Study Cell Biology' }),
+    ).toBeInTheDocument()
   })
 
   it('offers the three study modes with flashcards preselected', async () => {
