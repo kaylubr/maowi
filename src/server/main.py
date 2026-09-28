@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from server.attempts.router import router as attempts_router
 from server.auth.router import router as auth_router
 from server.config import settings
+from server.dashboard.router import router as dashboard_router
 from server.modules.router import router as modules_router
 from server.modules.tasks import sweep_orphaned_creations
 from server.questions.router import router as questions_router
@@ -33,3 +34,4 @@ app.include_router(users_router)
 app.include_router(modules_router)
 app.include_router(questions_router)
 app.include_router(attempts_router)
+app.include_router(dashboard_router)

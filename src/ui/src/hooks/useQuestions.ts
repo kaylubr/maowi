@@ -31,14 +31,3 @@ export function useIdentificationQuestions(moduleId: number, count?: number) {
     queryFn: () => questionsApi.listIdentificationQuestions(moduleId, count),
   })
 }
-
-export function useModuleQuestionCount(moduleId: number) {
-  const query = useIdentificationQuestions(moduleId)
-
-  return {
-    total: query.data?.length ?? 0,
-    isPending: query.isPending,
-    isError: query.isError,
-    error: query.error,
-  }
-}

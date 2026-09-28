@@ -1,16 +1,15 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import type { StudyModule } from '../../api/modules'
+import type { ModuleSummary } from '../../api/dashboard'
 import type { QuestionMode } from '../../api/questions'
-import { useModuleQuestionCount } from '../../hooks/useQuestions'
 import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
 import { Modal } from '../ui/Modal'
-import { ErrorText, Label } from '../ui/typography'
+import { Label } from '../ui/typography'
 
 type StudyModeModalProps = {
-  module: StudyModule | null
+  module: ModuleSummary | null
   onClose: () => void
 }
 
@@ -37,28 +36,21 @@ export function StudyModeModal({ module, onClose }: StudyModeModalProps) {
     return null
   }
 
-  return <StudyModeDialog module={module} onClose={onClose} />
+  return <StudyModeDialog key={module.id} module={module} onClose={onClose} />
 }
 
 function StudyModeDialog({
   module,
   onClose,
 }: {
-  module: StudyModule
+  module: ModuleSummary
   onClose: () => void
 }) {
   const navigate = useNavigate()
-  const { total, isPending, isError, error } = useModuleQuestionCount(module.id)
-  const [mode, setMode] = useState<QuestionMode>('flashcard')
-  const [countInput, setCountInput] = useState('')
-  const [seededTotal, setSeededTotal] = useState(-1)
-
+  const total = module.question_count
   const hasQuestions = total > 0
-
-  if (total > 0 && seededTotal !== total) {
-    setSeededTotal(total)
-    setCountInput(String(total))
-  }
+  const [mode, setMode] = useState<QuestionMode>('flashcard')
+  const [countInput, setCountInput] = useState(hasQuestions ? String(total) : '')
 
   const count = clampCount(Number(countInput), total)
 
@@ -68,69 +60,57 @@ function StudyModeDialog({
 
   return (
     <Modal open title={`Study ${module.name}`} onClose={onClose}>
-      {isPending ? <p className="text-body-secondary">Loading questions…</p> : null}
-
-      {isError ? (
-        <ErrorText>
-          {error instanceof Error ? error.message : 'Could not load questions.'}
-        </ErrorText>
-      ) : null}
-
-      {!isPending && !isError ? (
-        <>
-          <fieldset className="mb-3">
-            <legend className="form-label">Study mode</legend>
-            {MODES.map((option) => (
-              <div key={option.value} className="form-check">
-                <input
-                  className="form-check-input"
-                  type="radio"
-                  name="study-mode"
-                  id={`study-mode-${option.value}`}
-                  value={option.value}
-                  checked={mode === option.value}
-                  onChange={() => setMode(option.value)}
-                />
-                <label
-                  className="form-check-label"
-                  htmlFor={`study-mode-${option.value}`}
-                >
-                  <span className="d-block">{option.label}</span>
-                  <span className="d-block small text-body-secondary">
-                    {option.description}
-                  </span>
-                </label>
-              </div>
-            ))}
-          </fieldset>
-
-          <div className="mb-3">
-            <Label htmlFor="question-count">Number of questions</Label>
-            <Input
-              id="question-count"
-              type="number"
-              min={1}
-              max={hasQuestions ? total : 1}
-              value={countInput}
-              onChange={(event) => setCountInput(event.target.value)}
-              onBlur={() => setCountInput(String(count))}
-              disabled={!hasQuestions}
-              style={{ maxWidth: '8rem' }}
+      <fieldset className="mb-3">
+        <legend className="form-label">Study mode</legend>
+        {MODES.map((option) => (
+          <div key={option.value} className="form-check">
+            <input
+              className="form-check-input"
+              type="radio"
+              name="study-mode"
+              id={`study-mode-${option.value}`}
+              value={option.value}
+              checked={mode === option.value}
+              onChange={() => setMode(option.value)}
             />
-            <div className="form-text">
-              {hasQuestions
-                ? `This module has ${total} question${total === 1 ? '' : 's'}.`
-                : 'This module has no questions yet.'}
-            </div>
+            <label
+              className="form-check-label"
+              htmlFor={`study-mode-${option.value}`}
+            >
+              <span className="d-block">{option.label}</span>
+              <span className="d-block small text-body-secondary">
+                {option.description}
+              </span>
+            </label>
           </div>
-        </>
-      ) : null}
+        ))}
+      </fieldset>
+
+      <div className="mb-3">
+        <Label htmlFor="question-count">Number of questions</Label>
+        <Input
+          id="question-count"
+          type="number"
+          min={1}
+          max={hasQuestions ? total : 1}
+          value={countInput}
+          onChange={(event) => setCountInput(event.target.value)}
+          onBlur={() => setCountInput(String(count))}
+          disabled={!hasQuestions}
+          style={{ maxWidth: '8rem' }}
+        />
+        <div className="form-text">
+          {hasQuestions
+            ? `This module has ${total} question${total === 1 ? '' : 's'}.`
+            : 'This module has no questions yet.'}
+        </div>
+      </div>
 
       <div className="d-flex justify-content-end gap-2">
         <Button variant="secondary" onClick={onClose}>
           Cancel
         </Button>
-        <Button onClick={start} disabled={!hasQuestions || isPending || isError}>
+        <Button onClick={start} disabled={!hasQuestions}>
           Start studying
         </Button>
       </div>

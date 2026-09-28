@@ -3,6 +3,8 @@ import { render } from '@testing-library/react'
 import { RouterProvider, createMemoryRouter } from 'react-router-dom'
 import { vi } from 'vitest'
 
+import type { DashboardSummary, ModuleSummary } from '../../src/ui/src/api/dashboard'
+import type { StudyModule } from '../../src/ui/src/api/modules'
 import { config } from '../../src/ui/src/config'
 import { routes } from '../../src/ui/src/routes'
 
@@ -61,6 +63,41 @@ export function stubApi(responses: StubResponse[]) {
       stubs.splice(0, stubs.length, ...next)
     },
   }
+}
+
+export function moduleSummary(
+  module: StudyModule,
+  extra: Partial<ModuleSummary> = {},
+): ModuleSummary {
+  return {
+    ...module,
+    question_count: 0,
+    attempt_count: 0,
+    best_score: null,
+    last_studied_at: null,
+    ...extra,
+  }
+}
+
+export function dashboardStub(modules: ModuleSummary[] = []): StubResponse {
+  const summary: DashboardSummary = {
+    module_count: modules.length,
+    question_count: sum(modules, 'question_count'),
+    attempt_count: sum(modules, 'attempt_count'),
+    average_score: null,
+    best_score: null,
+    last_studied_at: null,
+    modules,
+  }
+
+  return { path: '/api/dashboard/summary', body: summary }
+}
+
+function sum(
+  modules: ModuleSummary[],
+  key: 'question_count' | 'attempt_count',
+): number {
+  return modules.reduce((total, module) => total + module[key], 0)
 }
 
 export function renderApp(initialPath = '/') {

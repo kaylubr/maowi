@@ -2,8 +2,8 @@ import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import type { StudyModule } from '../../src/ui/src/api/modules'
-import { renderApp, stubApi } from './helpers'
+import type { ModuleSummary } from '../../src/ui/src/api/dashboard'
+import { dashboardStub, moduleSummary, renderApp, stubApi } from './helpers'
 import type { StubResponse } from './helpers'
 
 const USER = {
@@ -12,13 +12,13 @@ const USER = {
   created_at: '2026-01-01T00:00:00Z',
 }
 
-const CELL_BIOLOGY: StudyModule = { id: 10, name: 'Cell Biology' }
-const PHOTOSYNTHESIS: StudyModule = { id: 11, name: 'Photosynthesis' }
+const CELL_BIOLOGY = moduleSummary({ id: 10, name: 'Cell Biology' })
+const PHOTOSYNTHESIS = moduleSummary({ id: 11, name: 'Photosynthesis' })
 
-function stubDashboard(modules: StudyModule[], extra: StubResponse[] = []) {
+function stubDashboard(modules: ModuleSummary[] = [], extra: StubResponse[] = []) {
   return stubApi([
     { path: '/api/users/me', body: USER },
-    { path: '/api/modules', body: modules },
+    dashboardStub(modules),
     ...extra,
   ])
 }

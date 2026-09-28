@@ -18,7 +18,7 @@ An AI-powered study app: the user adds a module by naming it and attaching lectu
 - Backend: FastAPI (`fastapi[standard]`), SQLAlchemy, Alembic, PostgreSQL (Docker Compose locally, Neon in prod)
 - Package management: `uv add <package>` / `uv add --dev <package>` only — never hand-edit `pyproject.toml`'s dependency list
 - All source lives under `src/`: backend in `src/server/`, frontend in `src/ui/`. `tests/` stays at the project root, outside `src/`
-- Backend is grouped by domain (`auth/`, `users/`, `modules/`, `questions/`, `attempts/`, `ai/`), each with its own `router.py`, `schemas.py`, `models.py`, `service.py` — domains don't share files
+- Backend is grouped by domain (`auth/`, `users/`, `modules/`, `questions/`, `attempts/`, `dashboard/`, `ai/`), each with its own `router.py`, `schemas.py`, `models.py`, `service.py` — domains don't share files
 - DB session/engine setup lives only in `src/server/db/` — nothing else defines an engine or session
 - All Gemini calls go through `src/server/ai/client.py` — never call the SDK directly from elsewhere
 - Auth cookie is HttpOnly + `SameSite=Strict`, no CSRF token
@@ -26,6 +26,7 @@ An AI-powered study app: the user adds a module by naming it and attaching lectu
 - Uploaded files are never persisted — they are parsed in memory during module creation and discarded (parsing lives in `src/server/modules/parsing.py`)
 - Module creation is one background job tracked by `module_creations` (`generating`/`ready`/`error`); a module row is only written once its questions generate successfully, so `modules` carries no status of its own
 - A module creation takes up to 5 files, enforced server-side before parsing
+- The dashboard reads one aggregate endpoint (`GET /api/dashboard/summary`) that rolls up modules, questions and completed attempts into user totals plus a per-module breakdown, ordered most-recently-studied first — no per-module stat requests
 
 ## Common Workflows
 - **Commit immediately after finishing each feature, before starting the next one.** Never let two features sit uncommitted together. If a feature is only partially done, commit what works before moving forward — don't carry unfinished work into the next task.

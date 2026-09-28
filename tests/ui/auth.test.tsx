@@ -2,7 +2,7 @@ import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { renderApp, stubApi } from './helpers'
+import { dashboardStub, renderApp, stubApi } from './helpers'
 
 const USER = {
   id: 1,
@@ -16,7 +16,7 @@ const UNAUTHENTICATED = {
   body: { detail: 'Not authenticated' },
 }
 
-const DASHBOARD_STUBS = [{ path: '/api/modules', body: [] }]
+const DASHBOARD_STUBS = [dashboardStub()]
 
 afterEach(() => {
   vi.unstubAllGlobals()

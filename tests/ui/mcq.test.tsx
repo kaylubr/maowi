@@ -2,7 +2,7 @@ import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { renderApp, stubApi } from './helpers'
+import { dashboardStub, renderApp, stubApi } from './helpers'
 import type { StubResponse } from './helpers'
 
 const USER = {
@@ -265,7 +265,7 @@ describe('abandoning an unfinished attempt', () => {
   it('leaves the quiz when the user confirms', async () => {
     const user = userEvent.setup()
     stubQuiz([
-      { path: '/api/modules', body: [] },
+      dashboardStub(),
     ])
 
     const { router } = renderApp(`/modules/${MODULE_ID}/mcq?count=2`)
@@ -288,7 +288,7 @@ describe('abandoning an unfinished attempt', () => {
         path: COMPLETE_PATH,
         body: { ...ATTEMPT, score: 0, completed_at: '2026-01-01T00:10:00Z' },
       },
-      { path: '/api/modules', body: [] },
+      dashboardStub(),
     ])
 
     const { router } = renderApp(`/modules/${MODULE_ID}/mcq?count=2`)

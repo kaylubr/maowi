@@ -2,8 +2,9 @@ import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import type { ModuleCreation, StudyModule } from '../../src/ui/src/api/modules'
-import { renderApp, stubApi } from './helpers'
+import type { ModuleSummary } from '../../src/ui/src/api/dashboard'
+import type { ModuleCreation } from '../../src/ui/src/api/modules'
+import { dashboardStub, moduleSummary, renderApp, stubApi } from './helpers'
 import type { StubResponse } from './helpers'
 
 const USER = {
@@ -12,8 +13,19 @@ const USER = {
   created_at: '2026-01-01T00:00:00Z',
 }
 
-const CELL_BIOLOGY: StudyModule = { id: 10, name: 'Cell Biology' }
-const PHOTOSYNTHESIS: StudyModule = { id: 11, name: 'Photosynthesis' }
+const CELL_BIOLOGY = moduleSummary(
+  { id: 10, name: 'Cell Biology' },
+  {
+    question_count: 24,
+    attempt_count: 3,
+    best_score: 92,
+    last_studied_at: '2026-09-27T00:00:00Z',
+  },
+)
+const PHOTOSYNTHESIS = moduleSummary(
+  { id: 11, name: 'Photosynthesis' },
+  { question_count: 12 },
+)
 
 const CREATIONS_PATH = '/api/modules/creations'
 
@@ -27,10 +39,10 @@ function creation(id: number, body: Partial<ModuleCreation>): ModuleCreation {
   }
 }
 
-function stubDashboard(modules: StudyModule[], extra: StubResponse[] = []) {
+function stubDashboard(modules: ModuleSummary[] = [], extra: StubResponse[] = []) {
   return stubApi([
     { path: '/api/users/me', body: USER },
-    { path: '/api/modules', body: modules },
+    dashboardStub(modules),
     ...extra,
   ])
 }
@@ -47,6 +59,29 @@ describe('dashboard', () => {
 
     expect(await screen.findByText('Cell Biology')).toBeInTheDocument()
     expect(screen.getByText('Photosynthesis')).toBeInTheDocument()
+  })
+
+  it('summarises the library in the hero', async () => {
+    stubDashboard([CELL_BIOLOGY, PHOTOSYNTHESIS])
+
+    renderApp('/dashboard')
+
+    expect(await screen.findByText('Modules')).toBeInTheDocument()
+    expect(screen.getByText('Modules').parentElement).toHaveTextContent('2')
+    expect(screen.getByText('Questions').parentElement).toHaveTextContent('36')
+    expect(screen.getByText('Attempts').parentElement).toHaveTextContent('3')
+    expect(screen.getByText('Average score').parentElement).toHaveTextContent('—')
+  })
+
+  it('shows question counts and study history on each card', async () => {
+    stubDashboard([CELL_BIOLOGY, PHOTOSYNTHESIS])
+
+    renderApp('/dashboard')
+
+    expect(await screen.findByText('24 questions')).toBeInTheDocument()
+    expect(screen.getByText('12 questions')).toBeInTheDocument()
+    expect(screen.getByText(/best 92%/i)).toBeInTheDocument()
+    expect(screen.getByText('Not studied yet')).toBeInTheDocument()
   })
 
   it('shows an empty state when there are no modules', async () => {

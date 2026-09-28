@@ -1,6 +1,5 @@
 import { apiFetch } from './client'
 
-export const MODULES_QUERY_KEY = ['modules'] as const
 export const MODULE_CREATIONS_QUERY_KEY = ['moduleCreations'] as const
 
 export type StudyModule = {
@@ -15,10 +14,6 @@ export type ModuleCreation = {
   status: CreationStatus
   module_id: number | null
   error_message: string | null
-}
-
-export function listModules(): Promise<StudyModule[]> {
-  return apiFetch<StudyModule[]>('/api/modules')
 }
 
 export function renameModule(

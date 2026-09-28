@@ -3,7 +3,9 @@ import { useIsFetching, useIsMutating } from '@tanstack/react-query'
 import { useDelayedLoading } from '../../hooks/useDelayedLoading'
 
 export function LoadingOverlay() {
-  const activeFetches = useIsFetching()
+  const activeFetches = useIsFetching({
+    predicate: (query) => query.meta?.silent !== true,
+  })
   const activeMutations = useIsMutating()
 
   const pending = activeFetches > 0 || activeMutations > 0

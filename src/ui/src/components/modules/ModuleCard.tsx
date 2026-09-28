@@ -1,10 +1,10 @@
-import type { StudyModule } from '../../api/modules'
+import type { ModuleSummary } from '../../api/dashboard'
 import { Button } from '../ui/Button'
 
 type ModuleCardProps = {
-  module: StudyModule
-  onStudy?: (module: StudyModule) => void
-  onDelete?: (module: StudyModule) => void
+  module: ModuleSummary
+  onStudy?: (module: ModuleSummary) => void
+  onDelete?: (module: ModuleSummary) => void
 }
 
 export function ModuleCard({ module, onStudy, onDelete }: ModuleCardProps) {
@@ -12,7 +12,17 @@ export function ModuleCard({ module, onStudy, onDelete }: ModuleCardProps) {
     <div className="col">
       <div className="card h-100 brand-card brand-lift">
         <div className="card-body">
-          <h3 className="card-title h5 mb-0">{module.name}</h3>
+          <div className="d-flex align-items-start justify-content-between gap-3">
+            <h3 className="card-title h5 mb-0">{module.name}</h3>
+            <span className="brand-chip text-nowrap">
+              {module.question_count}{' '}
+              {module.question_count === 1 ? 'question' : 'questions'}
+            </span>
+          </div>
+
+          <p className="text-body-secondary small mt-3 mb-0">
+            {studySummary(module)}
+          </p>
         </div>
 
         <div className="card-footer bg-transparent d-flex flex-wrap gap-2">
@@ -37,4 +47,49 @@ export function ModuleCard({ module, onStudy, onDelete }: ModuleCardProps) {
       </div>
     </div>
   )
+}
+
+function studySummary(module: ModuleSummary): string {
+  if (module.attempt_count === 0) {
+    return 'Not studied yet'
+  }
+
+  return `Best ${module.best_score}% · studied ${formatRelativeTime(module.last_studied_at)}`
+}
+
+function formatRelativeTime(iso: string | null): string {
+  if (iso === null) {
+    return 'recently'
+  }
+
+  const minutes = Math.floor((Date.now() - new Date(iso).getTime()) / 60000)
+
+  if (minutes < 1) {
+    return 'just now'
+  }
+  if (minutes < 60) {
+    return `${minutes}m ago`
+  }
+
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) {
+    return `${hours}h ago`
+  }
+
+  const days = Math.floor(hours / 24)
+  if (days < 7) {
+    return `${days}d ago`
+  }
+
+  const weeks = Math.floor(days / 7)
+  if (weeks < 5) {
+    return `${weeks}w ago`
+  }
+
+  const months = Math.floor(days / 30)
+  if (months < 12) {
+    return `${months}mo ago`
+  }
+
+  return `${Math.floor(days / 365)}y ago`
 }

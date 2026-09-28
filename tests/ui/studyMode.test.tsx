@@ -2,8 +2,8 @@ import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import type { StudyModule } from '../../src/ui/src/api/modules'
-import { renderApp, stubApi } from './helpers'
+import type { ModuleSummary } from '../../src/ui/src/api/dashboard'
+import { dashboardStub, moduleSummary, renderApp, stubApi } from './helpers'
 
 const USER = {
   id: 1,
@@ -11,24 +11,26 @@ const USER = {
   created_at: '2026-01-01T00:00:00Z',
 }
 
-const CELL_BIOLOGY: StudyModule = { id: 10, name: 'Cell Biology' }
-
-const READY_MODULE: StudyModule = { id: 11, name: 'Photosynthesis' }
-
 const QUESTIONS = [
   { id: 1, prompt: 'What is the capital of Australia?' },
   { id: 2, prompt: 'How many chromosomes do humans have?' },
   { id: 3, prompt: 'What is the powerhouse of the cell?' },
 ]
 
-function stubDashboard(modules: StudyModule[], questions = QUESTIONS) {
+const CELL_BIOLOGY = moduleSummary(
+  { id: 10, name: 'Cell Biology' },
+  { question_count: QUESTIONS.length },
+)
+
+const READY_MODULE = moduleSummary(
+  { id: 11, name: 'Photosynthesis' },
+  { question_count: QUESTIONS.length },
+)
+
+function stubDashboard(modules: ModuleSummary[]) {
   return stubApi([
     { path: '/api/users/me', body: USER },
-    { path: '/api/modules', body: modules },
-    {
-      path: `/api/modules/${READY_MODULE.id}/questions?mode=identification`,
-      body: questions,
-    },
+    dashboardStub(modules),
   ])
 }
 
