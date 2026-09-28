@@ -63,21 +63,28 @@ describe('landing page', () => {
     expect(api.calls).toEqual([])
   })
 
-  it('points the footer at the page sections and the auth pages', () => {
+  it('points the footer at the legal pages, contact, and the source', () => {
     stubApi([])
 
     renderApp('/')
 
-    expect(screen.getByRole('link', { name: 'How it works' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Privacy policy' })).toHaveAttribute(
       'href',
-      '#how-it-works',
+      '/privacy',
     )
-    expect(screen.getByRole('link', { name: 'Study modes' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Terms of service' })).toHaveAttribute(
       'href',
-      '#study-modes',
+      '/terms',
     )
-    expect(
-      screen.getByRole('link', { name: 'Log in to your account' }),
-    ).toHaveAttribute('href', '/login')
+    expect(screen.getByRole('link', { name: 'Contact' })).toHaveAttribute(
+      'href',
+      '/contact',
+    )
+    expect(screen.getByRole('link', { name: 'Source code' })).toHaveAttribute(
+      'href',
+      'https://github.com/kaylubr/maowi',
+    )
+    expect(screen.queryByText('On this page')).not.toBeInTheDocument()
+    expect(screen.queryByText('Your account')).not.toBeInTheDocument()
   })
 })

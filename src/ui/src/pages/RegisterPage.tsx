@@ -76,6 +76,12 @@ export function RegisterPage() {
               </form>
 
               <p className="mt-3 mb-0 small text-body-secondary">
+                By creating an account you agree to our{' '}
+                <Link to="/terms">Terms of service</Link> and{' '}
+                <Link to="/privacy">Privacy policy</Link>.
+              </p>
+
+              <p className="mt-2 mb-0 small text-body-secondary">
                 Already have an account? <Link to="/login">Log in</Link>
               </p>
             </div>
