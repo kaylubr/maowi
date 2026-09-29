@@ -6,10 +6,6 @@
   --brand-radius: 1rem;
 }
 
-.brand-header {
-  border-bottom: 2px solid var(--brand-accent);
-}
-
 .brand-eyebrow {
   color: var(--bs-secondary-color);
   font-size: 0.75rem;
