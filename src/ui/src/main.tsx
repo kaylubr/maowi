@@ -7,6 +7,7 @@ import 'bootstrap/dist/css/bootstrap.min.css'
 
 import './fonts.css'
 import './brand.css'
+import './auth.css'
 import './components/landing/landing.css'
 import './components/layout/header-menu.css'
 

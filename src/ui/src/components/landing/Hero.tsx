@@ -8,7 +8,6 @@ export function Hero() {
       <div className="container">
         <div className="row align-items-center g-5">
           <div className="col-12 col-lg-6">
-            <p className="landing-eyebrow mb-3">Study, actually</p>
             <h1 className="display-5 fw-bold">
               Turn your lecture notes into a study set
             </h1>
