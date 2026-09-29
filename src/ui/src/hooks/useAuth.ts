@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   fetchCurrentUser,
   login as loginRequest,
+  loginWithGoogle as loginWithGoogleRequest,
   logout as logoutRequest,
   register as registerRequest,
 } from '../api/auth'
@@ -38,6 +39,11 @@ export function useAuth() {
     onSuccess: (user) => syncSession(user),
   })
 
+  const googleLoginMutation = useMutation({
+    mutationFn: (credential: string) => loginWithGoogleRequest(credential),
+    onSuccess: (user) => syncSession(user),
+  })
+
   const logoutMutation = useMutation({
     mutationFn: logoutRequest,
     onSuccess: () => syncSession(null),
@@ -53,6 +59,7 @@ export function useAuth() {
     sessionError: userQuery.error,
     refetchSession: userQuery.refetch,
     login: loginMutation,
+    loginWithGoogle: googleLoginMutation,
     register: registerMutation,
     logout: logoutMutation,
   }

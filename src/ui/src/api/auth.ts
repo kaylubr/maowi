@@ -29,6 +29,13 @@ export function register(credentials: Credentials): Promise<User> {
   })
 }
 
+export function loginWithGoogle(credential: string): Promise<User> {
+  return apiFetch<User>('/api/auth/google', {
+    method: 'POST',
+    body: JSON.stringify({ credential }),
+  })
+}
+
 export function logout(): Promise<null> {
   return apiFetch<null>('/api/auth/logout', { method: 'POST' })
 }

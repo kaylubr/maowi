@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 
+import { GoogleSignInButton } from '../components/auth/GoogleSignInButton'
 import { BackButton } from '../components/ui/BackButton'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
@@ -35,6 +36,14 @@ export function RegisterPage() {
           <div className="card">
             <div className="card-body p-4">
               <h1 className="card-title h3 mb-4">Create account</h1>
+
+              <GoogleSignInButton />
+
+              <div className="d-flex align-items-center gap-2 my-3">
+                <hr className="flex-grow-1 my-0" />
+                <span className="text-body-secondary small">or</span>
+                <hr className="flex-grow-1 my-0" />
+              </div>
 
               <form onSubmit={submit}>
                 <div className="mb-3">
