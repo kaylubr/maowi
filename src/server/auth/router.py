@@ -1,8 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
 
-from server.auth import service
-from server.auth.google import InvalidGoogleCredentialError, verify_google_id_token
+from server.auth import google, service
 from server.auth.schemas import GoogleLoginRequest, LoginRequest, RegisterRequest
 from server.auth.security import clear_auth_cookie, create_access_token, set_auth_cookie
 from server.db.session import get_db
@@ -49,8 +48,8 @@ def google_login(
     db: Session = Depends(get_db),
 ) -> User:
     try:
-        identity = verify_google_id_token(payload.credential)
-    except InvalidGoogleCredentialError:
+        identity = google.verify_google_id_token(payload.credential)
+    except google.InvalidGoogleCredentialError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid Google credential",
