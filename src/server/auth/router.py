@@ -2,7 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
 
 from server.auth import service
-from server.auth.schemas import LoginRequest, RegisterRequest
+from server.auth.google import InvalidGoogleCredentialError, verify_google_id_token
+from server.auth.schemas import GoogleLoginRequest, LoginRequest, RegisterRequest
 from server.auth.security import clear_auth_cookie, create_access_token, set_auth_cookie
 from server.db.session import get_db
 from server.users.models import User
@@ -35,6 +36,32 @@ def login(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password",
+        )
+
+    set_auth_cookie(response, create_access_token(user.id))
+    return user
+
+
+@router.post("/google", response_model=UserRead)
+def google_login(
+    payload: GoogleLoginRequest,
+    response: Response,
+    db: Session = Depends(get_db),
+) -> User:
+    try:
+        identity = verify_google_id_token(payload.credential)
+    except InvalidGoogleCredentialError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid Google credential",
+        )
+
+    try:
+        user = service.authenticate_with_google(db, identity)
+    except service.GoogleEmailNotVerifiedError:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Google email not verified",
         )
 
     set_auth_cookie(response, create_access_token(user.id))
