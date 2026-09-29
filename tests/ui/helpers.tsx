@@ -6,6 +6,7 @@ import { vi } from 'vitest'
 import type { DashboardSummary, ModuleSummary } from '../../src/ui/src/api/dashboard'
 import type { StudyModule } from '../../src/ui/src/api/modules'
 import { config } from '../../src/ui/src/config'
+import { COMPACT_NAV_QUERY } from '../../src/ui/src/components/layout/HeaderMenu'
 import { routes } from '../../src/ui/src/routes'
 
 export type StubResponse = {
@@ -98,6 +99,19 @@ function sum(
   key: 'question_count' | 'attempt_count',
 ): number {
   return modules.reduce((total, module) => total + module[key], 0)
+}
+
+export function stubViewport(compact: boolean): void {
+  vi.stubGlobal('matchMedia', (query: string) => ({
+    matches: query === COMPACT_NAV_QUERY ? compact : false,
+    media: query,
+    onchange: null,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    dispatchEvent: vi.fn(() => true),
+  }))
 }
 
 export function renderApp(initialPath = '/') {

@@ -1,0 +1,6 @@
+.header-menu-panel {
+  max-height: calc(100dvh - 5rem);
+  max-width: calc(100vw - 2rem);
+  overflow-wrap: anywhere;
+  overflow-y: auto;
+}

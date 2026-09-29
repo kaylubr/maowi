@@ -8,6 +8,7 @@ import 'bootstrap/dist/css/bootstrap.min.css'
 import './fonts.css'
 import './brand.css'
 import './components/landing/landing.css'
+import './components/layout/header-menu.css'
 
 import { LoadingOverlay } from './components/ui/LoadingOverlay'
 import { routes } from './routes'

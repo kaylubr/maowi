@@ -6,6 +6,7 @@ import { Button } from '../ui/Button'
 import { ConfirmModal } from '../ui/ConfirmModal'
 import { Logo } from '../ui/Logo'
 import { ThemeToggle } from '../ui/ThemeToggle'
+import { HeaderMenu } from './HeaderMenu'
 
 export function Navbar() {
   const { user, logout } = useAuth()
@@ -21,24 +22,25 @@ export function Navbar() {
   }
 
   return (
-    <header data-bs-theme="dark" className="bg-dark text-white">
+    <header data-bs-theme="dark" className="bg-dark text-white position-relative">
       <nav className="navbar">
         <div className="container">
           <Link to="/dashboard" className="navbar-brand">
             <Logo />
           </Link>
 
-          <div className="d-flex align-items-center gap-2">
+          <HeaderMenu
+            className="text-white"
+            panelClassName="bg-dark border-secondary-subtle"
+            trailing={isDashboard ? <ThemeToggle /> : null}
+          >
             {user ? (
-              <span className="text-body-secondary small d-none d-sm-inline">
-                {user.email}
-              </span>
+              <span className="text-body-secondary small">{user.email}</span>
             ) : null}
             <Button variant="ghost" onClick={() => setConfirmingLogout(true)}>
               Log out
             </Button>
-            {isDashboard ? <ThemeToggle /> : null}
-          </div>
+          </HeaderMenu>
         </div>
       </nav>
 
