@@ -6,6 +6,7 @@ class Settings(BaseSettings):
     gemini_api_key: str
     jwt_secret_key: str
     jwt_expire_minutes: int = 10080
+    google_client_id: str
     max_files_per_upload: int = 5
     max_upload_file_bytes: int = 10 * 1024 * 1024
     cookie_secure: bool = False
