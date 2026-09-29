@@ -33,6 +33,7 @@ declare global {
 
 export function GoogleSignInButton() {
   const { loginWithGoogle } = useAuth()
+  const signInWithGoogle = loginWithGoogle.mutate
   const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -49,7 +50,7 @@ export function GoogleSignInButton() {
 
       services.accounts.id.initialize({
         client_id: config.googleClientId,
-        callback: (response) => loginWithGoogle.mutate(response.credential),
+        callback: (response) => signInWithGoogle(response.credential),
       })
       services.accounts.id.renderButton(container, {
         type: 'standard',
@@ -73,7 +74,7 @@ export function GoogleSignInButton() {
     document.head.appendChild(script)
 
     return () => script.removeEventListener('load', render)
-  }, [loginWithGoogle.mutate])
+  }, [signInWithGoogle])
 
   return (
     <div>
