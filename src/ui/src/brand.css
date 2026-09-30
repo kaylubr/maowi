@@ -3,7 +3,68 @@
   --brand-accent-soft: rgba(240, 160, 42, 0.16);
   --brand-accent-ink: #241703;
   --brand-accent-on-dark: #f8c165;
+  --brand-accent-text: #9a6308;
   --brand-radius: 1rem;
+
+  --bs-primary: var(--brand-accent);
+  --bs-primary-rgb: 240, 160, 42;
+  --bs-link-color: var(--brand-accent-text);
+  --bs-link-color-rgb: 154, 99, 8;
+  --bs-link-hover-color: #7d4f05;
+  --bs-link-hover-color-rgb: 125, 79, 5;
+}
+
+[data-bs-theme='dark'] {
+  --bs-link-color: var(--brand-accent-on-dark);
+  --bs-link-color-rgb: 248, 193, 101;
+  --bs-link-hover-color: #ffe3ab;
+  --bs-link-hover-color-rgb: 255, 227, 171;
+}
+
+.btn-primary {
+  --bs-btn-bg: var(--brand-accent);
+  --bs-btn-border-color: var(--brand-accent);
+  --bs-btn-color: var(--brand-accent-ink);
+  --bs-btn-hover-bg: #e0911f;
+  --bs-btn-hover-border-color: #e0911f;
+  --bs-btn-hover-color: var(--brand-accent-ink);
+  --bs-btn-active-bg: #c97f14;
+  --bs-btn-active-border-color: #c97f14;
+  --bs-btn-active-color: var(--brand-accent-ink);
+  --bs-btn-disabled-bg: var(--brand-accent);
+  --bs-btn-disabled-border-color: var(--brand-accent);
+  --bs-btn-disabled-color: var(--brand-accent-ink);
+  --bs-btn-focus-shadow-rgb: 240, 160, 42;
+}
+
+.form-control:focus {
+  border-color: var(--brand-accent);
+  box-shadow: 0 0 0 0.25rem var(--brand-accent-soft);
+}
+
+.form-check-input:checked {
+  background-color: var(--brand-accent);
+  border-color: var(--brand-accent);
+}
+
+.form-check-input:focus {
+  border-color: var(--brand-accent);
+  box-shadow: 0 0 0 0.25rem var(--brand-accent-soft);
+}
+
+.nav {
+  --bs-nav-pills-link-active-bg: var(--brand-accent);
+  --bs-nav-pills-link-active-color: var(--brand-accent-ink);
+}
+
+.alert-info {
+  --bs-alert-color: var(--brand-accent-ink);
+  --bs-alert-bg: var(--brand-accent-soft);
+  --bs-alert-border-color: var(--brand-accent);
+}
+
+[data-bs-theme='dark'] .alert-info {
+  --bs-alert-color: var(--brand-accent-on-dark);
 }
 
 .brand-eyebrow {

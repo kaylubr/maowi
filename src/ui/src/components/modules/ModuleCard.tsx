@@ -13,51 +13,49 @@ export function ModuleCard({ module, onStudy, onDelete }: ModuleCardProps) {
   return (
     <div className="col">
       <div className="card h-100 brand-card brand-lift">
-        <div className="card-body">
+        <div className="card-body d-flex flex-column">
           <div className="d-flex align-items-start justify-content-between gap-3">
-            <div>
-              <h3 className="card-title h5 mb-0">
-                <Link
-                  to={`/modules/${module.id}`}
-                  className="text-decoration-none"
-                >
-                  {module.name}
-                </Link>
-              </h3>
-              <span className="badge text-bg-secondary mt-2">
-                {module.is_owner ? 'Owner' : 'Member'}
-              </span>
-            </div>
+            <h3 className="card-title h5 mb-0">
+              <Link
+                to={`/modules/${module.id}`}
+                className="text-decoration-none"
+              >
+                {module.name}
+              </Link>
+            </h3>
             <span className="brand-chip text-nowrap">
               {module.question_count}{' '}
               {module.question_count === 1 ? 'question' : 'questions'}
             </span>
           </div>
 
-          <p className="text-body-secondary small mt-3 mb-0">
-            {studySummary(module)}
-          </p>
-        </div>
+          <div className="d-flex flex-wrap align-items-center gap-2 mt-2 text-body-secondary small">
+            <span className="badge text-bg-secondary">
+              {module.is_owner ? 'Owner' : 'Member'}
+            </span>
+            <span>{studySummary(module)}</span>
+          </div>
 
-        <div className="card-footer bg-transparent py-3">
-          {onStudy ? (
-            <Button
-              aria-label={`Study ${module.name}`}
-              onClick={() => onStudy(module)}
-              className='w-100'
-            >
-              Study
-            </Button>
-          ) : null}
-          {onDelete && module.is_owner ? (
-            <Button
-              variant="ghost"
-              aria-label={`Delete ${module.name}`}
-              onClick={() => onDelete(module)}
-            >
-              Delete
-            </Button>
-          ) : null}
+          <div className="d-flex flex-column gap-2 mt-auto pt-4">
+            {onStudy ? (
+              <Button
+                aria-label={`Study ${module.name}`}
+                onClick={() => onStudy(module)}
+                className="flex-grow-1"
+              >
+                Study
+              </Button>
+            ) : null}
+            {onDelete && module.is_owner ? (
+              <Button
+                variant="danger"
+                aria-label={`Delete ${module.name}`}
+                onClick={() => onDelete(module)}
+              >
+                Delete
+              </Button>
+            ) : null}
+          </div>
         </div>
       </div>
     </div>

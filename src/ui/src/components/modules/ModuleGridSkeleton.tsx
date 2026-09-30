@@ -6,21 +6,21 @@ export function ModuleGridSkeleton() {
       {Array.from({ length: SKELETON_ROWS }, (_, index) => (
         <div className="col" key={index}>
           <div className="card h-100 brand-card">
-            <div className="card-body">
+            <div className="card-body d-flex flex-column">
               <p className="placeholder-glow mb-2">
                 <span className="placeholder col-7" />
               </p>
-              <p className="placeholder-glow mb-0">
-                <span className="placeholder col-4" />
+              <p className="placeholder-glow mb-4">
+                <span className="placeholder col-5" />
               </p>
-            </div>
-            <div className="card-footer bg-transparent d-flex gap-2">
-              <span className="placeholder-glow col-4">
-                <span className="placeholder col-12" />
-              </span>
-              <span className="placeholder-glow col-3">
-                <span className="placeholder col-12" />
-              </span>
+              <div className="d-flex gap-2 mt-auto">
+                <span className="placeholder-glow flex-grow-1">
+                  <span className="placeholder col-12" />
+                </span>
+                <span className="placeholder-glow col-3">
+                  <span className="placeholder col-12" />
+                </span>
+              </div>
             </div>
           </div>
         </div>
