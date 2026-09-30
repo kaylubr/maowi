@@ -9,8 +9,7 @@ _model = "openai/gpt-oss-20b"
 _client = Groq(
     api_key=settings.groq_api_key
 )
-
-
+1
 def generate_json(prompt: str) -> dict: 
     response = _client.chat.completions.create(
         model=_model,

@@ -51,7 +51,7 @@ export function LandingFooter() {
                   rel="noopener noreferrer"
                   className="link-body-emphasis text-decoration-none"
                 >
-                  Source code
+                  Github
                 </a>
               </li>
             </ul>
