@@ -112,7 +112,9 @@ describe('adding a module', () => {
     const api = stubDashboard([])
     renderApp('/dashboard')
 
-    await user.click(await screen.findByRole('button', { name: 'Add module' }))
+    await user.click(
+      await screen.findByRole('button', { name: 'Add your first module' }),
+    )
     const tooMany = Array.from(
       { length: 6 },
       (_, index) => new File(['x'], `notes-${index}.pdf`),
@@ -139,7 +141,9 @@ describe('adding a module', () => {
     ])
     renderApp('/dashboard')
 
-    await user.click(await screen.findByRole('button', { name: 'Add module' }))
+    await user.click(
+      await screen.findByRole('button', { name: 'Add your first module' }),
+    )
     const dialog = await screen.findByRole('dialog', { name: 'Add module' })
     await user.type(within(dialog).getByLabelText('Module name'), 'Cell Biology')
     await user.upload(within(dialog).getByLabelText('Files'), [
@@ -172,7 +176,9 @@ describe('adding a module', () => {
     ])
     renderApp('/dashboard')
 
-    await user.click(await screen.findByRole('button', { name: 'Add module' }))
+    await user.click(
+      await screen.findByRole('button', { name: 'Add your first module' }),
+    )
     const dialog = await screen.findByRole('dialog', { name: 'Add module' })
     await user.type(within(dialog).getByLabelText('Module name'), 'Cell Biology')
     await user.upload(within(dialog).getByLabelText('Files'), [
@@ -197,7 +203,9 @@ describe('adding a module', () => {
     ])
     renderApp('/dashboard')
 
-    await user.click(await screen.findByRole('button', { name: 'Add module' }))
+    await user.click(
+      await screen.findByRole('button', { name: 'Add your first module' }),
+    )
     const dialog = await screen.findByRole('dialog', { name: 'Add module' })
     await user.type(within(dialog).getByLabelText('Module name'), 'Cell Biology')
     await user.upload(within(dialog).getByLabelText('Files'), [
@@ -226,7 +234,9 @@ describe('adding a module', () => {
     ])
     renderApp('/dashboard')
 
-    await user.click(await screen.findByRole('button', { name: 'Add module' }))
+    await user.click(
+      await screen.findByRole('button', { name: 'Add your first module' }),
+    )
     const dialog = await screen.findByRole('dialog', { name: 'Add module' })
     await user.type(within(dialog).getByLabelText('Module name'), 'Cell Biology')
     await user.upload(within(dialog).getByLabelText('Files'), [
@@ -253,7 +263,9 @@ describe('adding a module', () => {
     ])
     renderApp('/dashboard')
 
-    await user.click(await screen.findByRole('button', { name: 'Add module' }))
+    await user.click(
+      await screen.findByRole('button', { name: 'Add your first module' }),
+    )
     const dialog = await screen.findByRole('dialog', { name: 'Add module' })
     await user.type(within(dialog).getByLabelText('Module name'), 'Cell Biology')
     await user.upload(within(dialog).getByLabelText('Files'), [
