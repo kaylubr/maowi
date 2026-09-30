@@ -9,3 +9,4 @@ import server.modules.models
 import server.attempts.models
 import server.questions.models
 import server.users.models
+import server.members.models

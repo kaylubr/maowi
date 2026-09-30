@@ -8,6 +8,15 @@ class ModuleRead(BaseModel):
 
     id: int
     name: str
+    is_owner: bool
+
+
+class ModuleDetailRead(BaseModel):
+    id: int
+    name: str
+    is_owner: bool
+    invite_token: str
+    member_count: int
 
 
 class ModuleUpdate(BaseModel):

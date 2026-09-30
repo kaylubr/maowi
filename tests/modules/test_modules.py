@@ -58,6 +58,10 @@ def start_creation(
     )
 
 
+def join_module(client: TestClient, invite_token: str):
+    return client.post(f"/api/invitations/{invite_token}/accept")
+
+
 def test_list_modules_requires_authentication(client):
     assert client.get("/api/modules").status_code == 401
 
@@ -143,7 +147,9 @@ def test_creation_builds_a_module_with_questions(client, monkeypatch):
     assert status["module_id"] is not None
 
     modules = client.get("/api/modules").json()
-    assert modules == [{"id": status["module_id"], "name": "Cell Biology"}]
+    assert modules == [
+        {"id": status["module_id"], "name": "Cell Biology", "is_owner": True}
+    ]
 
     questions = client.get(
         f"/api/modules/{status['module_id']}/questions?mode=flashcard"
@@ -265,7 +271,11 @@ def test_rename_module(client, db_session):
     response = client.patch(f"/api/modules/{module.id}", json={"name": "New Name"})
 
     assert response.status_code == 200
-    assert response.json() == {"id": module.id, "name": "New Name"}
+    assert response.json() == {
+        "id": module.id,
+        "name": "New Name",
+        "is_owner": True,
+    }
 
 
 def test_rename_rejects_a_blank_name(client, db_session):
@@ -331,5 +341,87 @@ def test_delete_hides_other_users_modules(client, db_session):
     authenticate(client, "intruder@example.com")
 
     response = client.delete(f"/api/modules/{module.id}")
+
+    assert response.status_code == 404
+
+
+def test_module_detail_returns_the_invite_token_to_the_owner(client, db_session):
+    user_id = authenticate(client)
+    module = modules_service.create_module(db_session, user_id, "Cell Biology")
+
+    response = client.get(f"/api/modules/{module.id}")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "id": module.id,
+        "name": "Cell Biology",
+        "is_owner": True,
+        "invite_token": module.invite_token,
+        "member_count": 0,
+    }
+
+
+def test_module_detail_returns_the_invite_token_to_a_member(client, db_session):
+    owner_id = authenticate(client, "owner@example.com")
+    module = modules_service.create_module(db_session, owner_id, "Owner Module")
+    client.cookies.clear()
+    authenticate(client, "member@example.com")
+    join_module(client, module.invite_token)
+
+    response = client.get(f"/api/modules/{module.id}")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["id"] == module.id
+    assert body["name"] == "Owner Module"
+    assert body["is_owner"] is False
+    assert body["invite_token"] == module.invite_token
+    assert body["member_count"] == 1
+
+
+def test_module_detail_hides_other_users_modules(client, db_session):
+    owner_id = authenticate(client, "owner@example.com")
+    module = modules_service.create_module(db_session, owner_id, "Owner Module")
+    client.cookies.clear()
+    authenticate(client, "intruder@example.com")
+
+    assert client.get(f"/api/modules/{module.id}").status_code == 404
+
+
+def test_list_modules_includes_joined_modules(client, db_session):
+    owner_id = authenticate(client, "owner@example.com")
+    module = modules_service.create_module(db_session, owner_id, "Owner Module")
+    client.cookies.clear()
+    authenticate(client, "member@example.com")
+    join_module(client, module.invite_token)
+
+    modules = client.get("/api/modules").json()
+
+    assert modules == [
+        {"id": module.id, "name": "Owner Module", "is_owner": False}
+    ]
+
+
+def test_rename_hides_members(client, db_session):
+    owner_id = authenticate(client, "owner@example.com")
+    module = modules_service.create_module(db_session, owner_id, "Owner Module")
+    client.cookies.clear()
+    authenticate(client, "member@example.com")
+    join_module(client, module.invite_token)
+
+    response = client.patch(f"/api/modules/{module.id}", json={"name": "Hijacked"})
+
+    assert response.status_code == 404
+
+
+def test_delete_hides_members(client, db_session):
+    owner_id = authenticate(client, "owner@example.com")
+    module = modules_service.create_module(db_session, owner_id, "Owner Module")
+    module_id = module.id
+    client.cookies.clear()
+    authenticate(client, "member@example.com")
+    join_module(client, module.invite_token)
+
+    response = client.delete(f"/api/modules/{module_id}")
 
     assert response.status_code == 404

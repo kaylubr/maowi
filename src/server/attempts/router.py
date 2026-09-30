@@ -12,7 +12,7 @@ from server.attempts.schemas import (
 )
 from server.auth.dependencies import get_current_user
 from server.db.session import get_db
-from server.modules import service as modules_service
+from server.members import service as members_service
 from server.questions import service as questions_service
 from server.users.models import User
 
@@ -45,12 +45,9 @@ def start_attempt(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> Attempt:
-    module = modules_service.get_user_module(db, current_user.id, payload.module_id)
-    if module is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Module not found",
-        )
+    module = members_service.get_accessible_module(
+        db, current_user.id, payload.module_id
+    )
 
     questions = questions_service.list_module_questions(db, module.id, payload.count)
     if not questions:

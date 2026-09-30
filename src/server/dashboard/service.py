@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from server.attempts.models import Attempt
 from server.dashboard.schemas import DashboardSummaryRead, ModuleSummaryRead
+from server.members import service as members_service
 from server.modules.models import Module
 from server.questions.models import Question
 
@@ -22,9 +23,7 @@ score_ratio = cast(Attempt.score, Float) / Attempt.total_questions
 
 
 def get_summary(db: Session, user_id: int) -> DashboardSummaryRead:
-    modules = list(
-        db.scalars(select(Module).where(Module.user_id == user_id).order_by(Module.id))
-    )
+    modules = list_accessible_modules(db, user_id)
 
     if not modules:
         return empty_summary()
@@ -35,7 +34,7 @@ def get_summary(db: Session, user_id: int) -> DashboardSummaryRead:
     totals = score_attempts(db, user_id)
 
     summaries = [
-        build_module_summary(module, question_counts, per_module)
+        build_module_summary(module, user_id, question_counts, per_module)
         for module in modules
     ]
     summaries.sort(key=recency_key, reverse=True)
@@ -49,6 +48,14 @@ def get_summary(db: Session, user_id: int) -> DashboardSummaryRead:
         last_studied_at=totals.last_studied_at,
         modules=summaries,
     )
+
+
+def list_accessible_modules(db: Session, user_id: int) -> list[Module]:
+    module_ids = members_service.accessible_module_ids(db, user_id)
+    if not module_ids:
+        return []
+    statement = select(Module).where(Module.id.in_(module_ids)).order_by(Module.id)
+    return list(db.scalars(statement))
 
 
 def empty_summary() -> DashboardSummaryRead:
@@ -105,6 +112,7 @@ def score_attempts(db: Session, user_id: int) -> AttemptTotals:
 
 def build_module_summary(
     module: Module,
+    user_id: int,
     question_counts: dict[int, int],
     per_module: dict[int, tuple[int, float | None, datetime | None]],
 ) -> ModuleSummaryRead:
@@ -113,6 +121,7 @@ def build_module_summary(
     return ModuleSummaryRead(
         id=module.id,
         name=module.name,
+        is_owner=members_service.is_owner(module, user_id),
         question_count=question_counts.get(module.id, 0),
         attempt_count=count,
         best_score=to_percent(best_score),

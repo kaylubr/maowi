@@ -1,4 +1,5 @@
 import logging
+import secrets
 
 from sqlalchemy import update
 
@@ -38,7 +39,11 @@ def create_module_from_files(
             fail_creation(db, creation, error_message or EMPTY_RESULT_MESSAGE)
             return
 
-        module = Module(user_id=creation.user_id, name=name)
+        module = Module(
+            user_id=creation.user_id,
+            name=name,
+            invite_token=secrets.token_urlsafe(32),
+        )
         db.add(module)
         db.flush()
 

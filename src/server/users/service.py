@@ -30,6 +30,11 @@ def get_user_by_id(db: Session, user_id: int) -> User | None:
     return db.get(User, user_id)
 
 
+def get_users_by_ids(db: Session, user_ids: list[int]) -> dict[int, User]:
+    statement = select(User).where(User.id.in_(user_ids))
+    return {user.id: user for user in db.scalars(statement)}
+
+
 def create_user(
     db: Session,
     email: str,

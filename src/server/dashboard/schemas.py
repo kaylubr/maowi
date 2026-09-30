@@ -6,6 +6,7 @@ from pydantic import BaseModel
 class ModuleSummaryRead(BaseModel):
     id: int
     name: str
+    is_owner: bool
     question_count: int
     attempt_count: int
     best_score: int | None

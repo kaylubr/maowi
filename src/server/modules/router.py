@@ -13,9 +13,15 @@ from sqlalchemy.orm import Session
 from server.auth.dependencies import get_current_user
 from server.config import settings
 from server.db.session import get_db
+from server.members import service as members_service
 from server.modules import models, service
 from server.modules.parsing import UnsupportedFileTypeError, file_type_from_filename
-from server.modules.schemas import ModuleCreationRead, ModuleRead, ModuleUpdate
+from server.modules.schemas import (
+    ModuleCreationRead,
+    ModuleDetailRead,
+    ModuleRead,
+    ModuleUpdate,
+)
 from server.modules.tasks import Upload, create_module_from_files
 from server.users.models import User
 
@@ -65,12 +71,21 @@ def read_upload(upload: UploadFile) -> Upload:
     return filename, file_type, content
 
 
+def build_module_read(module: models.Module, user_id: int) -> ModuleRead:
+    return ModuleRead(
+        id=module.id,
+        name=module.name,
+        is_owner=members_service.is_owner(module, user_id),
+    )
+
+
 @router.get("", response_model=list[ModuleRead])
 def list_modules(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
-) -> list[models.Module]:
-    return service.list_modules(db, current_user.id)
+) -> list[ModuleRead]:
+    modules = service.list_modules(db, current_user.id)
+    return [build_module_read(module, current_user.id) for module in modules]
 
 
 @router.post(
@@ -110,15 +125,32 @@ def read_module_creation(
     return get_owned_creation(db, current_user.id, creation_id)
 
 
+@router.get("/{module_id}", response_model=ModuleDetailRead)
+def read_module(
+    module_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> ModuleDetailRead:
+    module = members_service.get_accessible_module(db, current_user.id, module_id)
+    return ModuleDetailRead(
+        id=module.id,
+        name=module.name,
+        is_owner=members_service.is_owner(module, current_user.id),
+        invite_token=module.invite_token,
+        member_count=members_service.count_members(db, module),
+    )
+
+
 @router.patch("/{module_id}", response_model=ModuleRead)
 def rename_module(
     module_id: int,
     payload: ModuleUpdate,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
-) -> models.Module:
+) -> ModuleRead:
     module = get_owned_module(db, current_user.id, module_id)
-    return service.rename_module(db, module, payload.name)
+    renamed = service.rename_module(db, module, payload.name)
+    return build_module_read(renamed, current_user.id)
 
 
 @router.delete("/{module_id}", status_code=status.HTTP_204_NO_CONTENT)

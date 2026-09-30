@@ -4,6 +4,7 @@ from fastapi.testclient import TestClient
 
 from server.attempts import service as attempts_service
 from server.attempts.models import AttemptMode
+from server.members import service as members_service
 from server.modules import service as modules_service
 from server.questions import service as questions_service
 
@@ -160,3 +161,41 @@ def test_summary_excludes_other_users(client, db_session):
     body = client.get(SUMMARY_PATH).json()
 
     assert body == EMPTY_SUMMARY
+
+
+def test_summary_marks_owned_modules(client, db_session):
+    user_id = authenticate(client)
+    build_module(db_session, user_id, "Cell Biology")
+
+    body = client.get(SUMMARY_PATH).json()
+
+    assert body["modules"][0]["is_owner"] is True
+
+
+def test_summary_includes_joined_modules(client, db_session):
+    owner_id = authenticate(client, "owner@example.com")
+    module = build_module(db_session, owner_id, "Owner Module")
+    record_attempt(
+        db_session, owner_id, module, 4, 4, datetime.now(timezone.utc)
+    )
+    client.cookies.clear()
+    member_id = authenticate(client, "member@example.com")
+    members_service.add_member(db_session, module, member_id)
+    record_attempt(
+        db_session, member_id, module, 1, 4, datetime.now(timezone.utc)
+    )
+
+    body = client.get(SUMMARY_PATH).json()
+
+    assert body["module_count"] == 1
+    assert body["question_count"] == 4
+    assert body["attempt_count"] == 1
+    assert body["best_score"] == 25
+    entry = body["modules"][0]
+    assert entry["id"] == module.id
+    assert entry["name"] == "Owner Module"
+    assert entry["is_owner"] is False
+    assert entry["question_count"] == 4
+    assert entry["attempt_count"] == 1
+    assert entry["best_score"] == 25
+    assert entry["last_studied_at"] is not None

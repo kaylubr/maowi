@@ -21,6 +21,7 @@ class Module(Base):
         ForeignKey("users.id", ondelete="CASCADE"), index=True
     )
     name: Mapped[str] = mapped_column(String(255))
+    invite_token: Mapped[str] = mapped_column(String(43), unique=True, index=True)
 
 
 class ModuleCreation(Base):
