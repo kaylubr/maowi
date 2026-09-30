@@ -133,7 +133,7 @@ This cannot be undone.`
         onCancel={() => setModuleToDelete(null)}
       />
 
-      {showCreateModule && !creationReady ? (
+      {showCreateModule ? (
         <CreateModuleModal
           onClose={closeCreateModal}
           creation={creation.data}

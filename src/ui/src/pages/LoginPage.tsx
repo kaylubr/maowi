@@ -10,14 +10,16 @@ import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
 import { Label } from '../components/ui/typography'
 import { useAuth } from '../hooks/useAuth'
+import { useRedirectTarget } from '../hooks/useRedirectTarget'
 
 export function LoginPage() {
+  const redirectTo = useRedirectTarget()
   const { login, isAuthenticated } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
 
   if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />
+    return <Navigate to={redirectTo} replace />
   }
 
   const submit = (event: SyntheticEvent) => {

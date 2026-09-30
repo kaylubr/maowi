@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom'
+
 import type { ModuleSummary } from '../../api/dashboard'
 import { Button } from '../ui/Button'
 
@@ -13,7 +15,19 @@ export function ModuleCard({ module, onStudy, onDelete }: ModuleCardProps) {
       <div className="card h-100 brand-card brand-lift">
         <div className="card-body">
           <div className="d-flex align-items-start justify-content-between gap-3">
-            <h3 className="card-title h5 mb-0">{module.name}</h3>
+            <div>
+              <h3 className="card-title h5 mb-0">
+                <Link
+                  to={`/modules/${module.id}`}
+                  className="text-decoration-none"
+                >
+                  {module.name}
+                </Link>
+              </h3>
+              <span className="badge text-bg-secondary mt-2">
+                {module.is_owner ? 'Owner' : 'Member'}
+              </span>
+            </div>
             <span className="brand-chip text-nowrap">
               {module.question_count}{' '}
               {module.question_count === 1 ? 'question' : 'questions'}
@@ -34,7 +48,7 @@ export function ModuleCard({ module, onStudy, onDelete }: ModuleCardProps) {
               Study
             </Button>
           ) : null}
-          {onDelete ? (
+          {onDelete && module.is_owner ? (
             <Button
               variant="ghost"
               aria-label={`Delete ${module.name}`}

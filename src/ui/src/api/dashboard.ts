@@ -4,6 +4,7 @@ import { apiFetch } from './client'
 export const DASHBOARD_QUERY_KEY = ['dashboard'] as const
 
 export type ModuleSummary = StudyModule & {
+  is_owner: boolean
   question_count: number
   attempt_count: number
   best_score: number | null

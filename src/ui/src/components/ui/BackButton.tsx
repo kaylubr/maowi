@@ -1,9 +1,13 @@
 import { Link } from 'react-router-dom'
 
-export function BackButton() {
+type BackButtonProps = {
+  to?: string
+}
+
+export function BackButton({ to = '/' }: BackButtonProps) {
   return (
     <Link
-      to="/"
+      to={to}
       className="btn btn-link text-decoration-none d-inline-flex align-items-center gap-1 px-0"
     >
       <svg

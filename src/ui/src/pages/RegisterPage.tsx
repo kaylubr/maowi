@@ -16,17 +16,19 @@ import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
 import { ErrorText, Label } from '../components/ui/typography'
 import { useAuth } from '../hooks/useAuth'
+import { useRedirectTarget } from '../hooks/useRedirectTarget'
 
 const MINIMUM_PASSWORD_LENGTH = 8
 
 export function RegisterPage() {
+  const redirectTo = useRedirectTarget()
   const { register, isAuthenticated } = useAuth()
   const [email, setEmail] = useState('')
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
 
   if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />
+    return <Navigate to={redirectTo} replace />
   }
 
   const submit = (event: FormEvent) => {

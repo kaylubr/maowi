@@ -1,6 +1,6 @@
-import type { InputHTMLAttributes } from 'react'
+import type { ComponentProps } from 'react'
 
-type InputProps = InputHTMLAttributes<HTMLInputElement>
+type InputProps = ComponentProps<'input'>
 
 export function Input({ className = '', ...rest }: InputProps) {
   return <input className={`form-control ${className}`} {...rest} />

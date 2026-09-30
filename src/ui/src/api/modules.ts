@@ -2,9 +2,27 @@ import { apiFetch } from './client'
 
 export const MODULE_CREATIONS_QUERY_KEY = ['moduleCreations'] as const
 
+export const MODULE_QUERY_KEY = ['module'] as const
+
 export type StudyModule = {
   id: number
   name: string
+}
+
+export type ModuleDetail = {
+  id: number
+  name: string
+  is_owner: boolean
+  invite_token: string
+  member_count: number
+}
+
+export function moduleQueryKey(moduleId: number) {
+  return [...MODULE_QUERY_KEY, moduleId] as const
+}
+
+export function fetchModule(moduleId: number): Promise<ModuleDetail> {
+  return apiFetch<ModuleDetail>(`/api/modules/${moduleId}`)
 }
 
 export type CreationStatus = 'generating' | 'ready' | 'error'

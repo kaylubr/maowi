@@ -5,9 +5,11 @@ import { ContactPage } from './pages/ContactPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { FlashcardPage } from './pages/FlashcardPage'
 import { IdentificationPage } from './pages/IdentificationPage'
+import { InvitePage } from './pages/InvitePage'
 import { LandingPage } from './pages/LandingPage'
 import { LoginPage } from './pages/LoginPage'
 import { McqPage } from './pages/McqPage'
+import { ModulePage } from './pages/ModulePage'
 import { PrivacyPage } from './pages/PrivacyPage'
 import { ProfilePage } from './pages/ProfilePage'
 import { RegisterPage } from './pages/RegisterPage'
@@ -17,6 +19,7 @@ export const routes: RouteObject[] = [
   { path: '/', element: <LandingPage /> },
   { path: '/login', element: <LoginPage /> },
   { path: '/register', element: <RegisterPage /> },
+  { path: '/invite/:token', element: <InvitePage /> },
   { path: '/privacy', element: <PrivacyPage /> },
   { path: '/terms', element: <TermsPage /> },
   { path: '/contact', element: <ContactPage /> },
@@ -30,6 +33,10 @@ export const routes: RouteObject[] = [
       {
         path: '/profile',
         element: <ProfilePage />,
+      },
+      {
+        path: '/modules/:id',
+        element: <ModulePage />,
       },
       {
         path: '/modules/:id/mcq',

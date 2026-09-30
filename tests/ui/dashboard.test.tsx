@@ -106,6 +106,48 @@ describe('dashboard', () => {
       screen.getByRole('button', { name: 'Delete Cell Biology' }),
     ).toBeInTheDocument()
   })
+
+  it('marks owned and joined modules differently', async () => {
+    stubDashboard([
+      moduleSummary({ id: 10, name: 'Cell Biology' }, { is_owner: true }),
+      moduleSummary({ id: 11, name: 'Photosynthesis' }, { is_owner: false }),
+    ])
+
+    renderApp('/dashboard')
+
+    const owned = (await screen.findByText('Cell Biology')).closest('.card')
+    const joined = screen.getByText('Photosynthesis').closest('.card')
+
+    expect(within(owned as HTMLElement).getByText('Owner')).toBeInTheDocument()
+    expect(within(joined as HTMLElement).getByText('Member')).toBeInTheDocument()
+  })
+
+  it('opens the module hub when the card is clicked', async () => {
+    const user = userEvent.setup()
+    stubDashboard([CELL_BIOLOGY], [
+      {
+        path: `/api/modules/${CELL_BIOLOGY.id}`,
+        body: {
+          id: CELL_BIOLOGY.id,
+          name: CELL_BIOLOGY.name,
+          is_owner: true,
+          invite_token: 'tok',
+          member_count: 0,
+        },
+      },
+      { path: `/api/modules/${CELL_BIOLOGY.id}/leaderboard`, body: [] },
+      { path: `/api/modules/${CELL_BIOLOGY.id}/members`, body: [] },
+    ])
+    const { router } = renderApp('/dashboard')
+
+    await user.click(await screen.findByRole('link', { name: 'Cell Biology' }))
+
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe(
+        `/modules/${CELL_BIOLOGY.id}`,
+      ),
+    )
+  })
 })
 
 describe('adding a module', () => {
@@ -279,6 +321,56 @@ describe('adding a module', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'At most 5 files per module',
+    )
+  })
+
+  it('reveals the invitation link and a way in once the module is ready', async () => {
+    const user = userEvent.setup()
+    stubDashboard([], [
+      { method: 'POST', path: CREATIONS_PATH, status: 202, body: creation(1, {}) },
+      {
+        path: `${CREATIONS_PATH}/1`,
+        body: creation(1, { status: 'ready', module_id: 12 }),
+      },
+      {
+        path: '/api/modules/12',
+        body: {
+          id: 12,
+          name: 'Cell Biology',
+          is_owner: true,
+          invite_token: 'tok-xyz',
+          member_count: 0,
+        },
+      },
+      { path: '/api/modules/12/leaderboard', body: [] },
+      { path: '/api/modules/12/members', body: [] },
+    ])
+    const { router } = renderApp('/dashboard')
+
+    await user.click(
+      await screen.findByRole('button', { name: 'Add your first module' }),
+    )
+    const dialog = await screen.findByRole('dialog', { name: 'Add module' })
+    await user.type(within(dialog).getByLabelText('Module name'), 'Cell Biology')
+    await user.upload(within(dialog).getByLabelText('Files'), [
+      new File(['a'], 'lecture.pdf'),
+    ])
+    await user.click(
+      within(dialog).getByRole('button', { name: 'Create module' }),
+    )
+
+    const ready = await screen.findByRole('dialog', { name: 'Module ready' })
+    expect(ready).toHaveTextContent('Cell Biology is ready to study.')
+    expect(
+      await screen.findByDisplayValue(
+        `${window.location.origin}/invite/tok-xyz`,
+      ),
+    ).toBeInTheDocument()
+
+    await user.click(within(ready).getByRole('button', { name: 'Go to module' }))
+
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe('/modules/12'),
     )
   })
 })

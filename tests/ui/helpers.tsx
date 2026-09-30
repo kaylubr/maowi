@@ -72,6 +72,7 @@ export function moduleSummary(
 ): ModuleSummary {
   return {
     ...module,
+    is_owner: true,
     question_count: 0,
     attempt_count: 0,
     best_score: null,
