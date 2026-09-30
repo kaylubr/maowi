@@ -74,7 +74,6 @@ export function useAbandonProtection(isActive: boolean) {
 
     const warnBeforeUnload = (event: BeforeUnloadEvent) => {
       event.preventDefault()
-      event.returnValue = ''
     }
 
     window.addEventListener('beforeunload', warnBeforeUnload)
