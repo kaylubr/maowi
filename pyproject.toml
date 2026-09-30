@@ -1,10 +1,10 @@
 [project]
 name = "maowi"
 version = "0.1.0"
-description = "Add your description here"
+description = "Turn lecture notes into AI-generated study questions and track your progress"
 readme = "README.md"
 authors = [
-    { name = "kaylubr", email = "kylebreyes092005@gmail.com" }
+    { name = "kaylubr", email = "kbreyes.dev@gmail.com" }
 ]
 requires-python = ">=3.12"
 dependencies = [
