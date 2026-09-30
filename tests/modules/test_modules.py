@@ -24,7 +24,11 @@ CREATIONS_PATH = "/api/modules/creations"
 
 
 def authenticate(client: TestClient, email: str = EMAIL) -> int:
-    client.post("/api/auth/register", json={"email": email, "password": PASSWORD})
+    username = email.split("@")[0]
+    client.post(
+        "/api/auth/register",
+        json={"email": email, "username": username, "password": PASSWORD},
+    )
     client.post("/api/auth/login", json={"email": email, "password": PASSWORD})
     return client.get("/api/users/me").json()["id"]
 

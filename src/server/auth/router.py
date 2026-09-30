@@ -16,7 +16,9 @@ router = APIRouter(prefix="/api/auth", tags=["auth"])
 )
 def register(payload: RegisterRequest, db: Session = Depends(get_db)) -> User:
     try:
-        return service.register_user(db, payload.email, payload.password)
+        return service.register_user(
+            db, payload.email, payload.password, payload.username
+        )
     except service.EmailAlreadyRegisteredError:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,

@@ -15,6 +15,8 @@ class GoogleIdentity:
     subject: str
     email: str
     email_verified: bool
+    name: str | None = None
+    picture: str | None = None
 
 
 def verify_google_id_token(credential: str) -> GoogleIdentity:
@@ -31,4 +33,6 @@ def verify_google_id_token(credential: str) -> GoogleIdentity:
         subject=claims["sub"],
         email=claims["email"],
         email_verified=bool(claims.get("email_verified")),
+        name=claims.get("name"),
+        picture=claims.get("picture"),
     )

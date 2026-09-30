@@ -1,11 +1,13 @@
 import { Navigate, Outlet } from 'react-router-dom'
 
 import { useAuth } from '../../hooks/useAuth'
+import { UsernamePrompt } from '../auth/UsernamePrompt'
 import { Button } from '../ui/Button'
 import { Navbar } from './Navbar'
 
 export function ProtectedRoute() {
   const {
+    user,
     isAuthenticated,
     isUnauthenticated,
     isResolvingSession,
@@ -16,6 +18,10 @@ export function ProtectedRoute() {
   const hasUnexpectedError = sessionError != null && !isUnauthenticated
 
   if (isAuthenticated) {
+    if (user !== null && user.username === null) {
+      return <UsernamePrompt />
+    }
+
     return (
       <div>
         <Navbar />

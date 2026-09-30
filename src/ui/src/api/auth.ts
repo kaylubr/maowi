@@ -3,12 +3,18 @@ import { apiFetch } from './client'
 export type User = {
   id: number
   email: string
+  username: string | null
+  avatar_url: string | null
   created_at: string
 }
 
 export type Credentials = {
   email: string
   password: string
+}
+
+export type Registration = Credentials & {
+  username: string
 }
 
 export function fetchCurrentUser(): Promise<User> {
@@ -22,7 +28,7 @@ export function login(credentials: Credentials): Promise<User> {
   })
 }
 
-export function register(credentials: Credentials): Promise<User> {
+export function register(credentials: Registration): Promise<User> {
   return apiFetch<User>('/api/auth/register', {
     method: 'POST',
     body: JSON.stringify(credentials),

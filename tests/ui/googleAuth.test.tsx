@@ -7,6 +7,8 @@ import { dashboardStub, renderApp, stubApi } from './helpers'
 const USER = {
   id: 1,
   email: 'student@example.com',
+  username: 'student',
+  avatar_url: null,
   created_at: '2026-01-01T00:00:00Z',
 }
 

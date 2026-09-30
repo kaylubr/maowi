@@ -7,6 +7,8 @@ import { dashboardStub, renderApp, stubApi } from './helpers'
 const USER = {
   id: 1,
   email: 'student@example.com',
+  username: 'student',
+  avatar_url: null,
   created_at: '2026-01-01T00:00:00Z',
 }
 
@@ -37,7 +39,7 @@ describe('protected routes', () => {
     renderApp('/dashboard')
 
     expect(await screen.findByText('Your modules')).toBeInTheDocument()
-    expect(screen.getByText(USER.email)).toBeInTheDocument()
+    expect(screen.getByText(USER.username)).toBeInTheDocument()
   })
 
   it('surfaces a server error instead of redirecting', async () => {
@@ -103,6 +105,7 @@ describe('register', () => {
     const { router } = renderApp('/register')
 
     await user.type(await screen.findByLabelText('Email'), USER.email)
+    await user.type(screen.getByLabelText('Username'), 'student')
     await user.type(screen.getByLabelText('Password'), 'correct-horse-battery')
 
     api.replace([

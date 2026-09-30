@@ -2,6 +2,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 
 import { useAuth } from '../../hooks/useAuth'
+import { Avatar } from '../ui/Avatar'
 import { Button } from '../ui/Button'
 import { ConfirmModal } from '../ui/ConfirmModal'
 import { Logo } from '../ui/Logo'
@@ -35,7 +36,18 @@ export function Navbar() {
             trailing={isDashboard ? <ThemeToggle /> : null}
           >
             {user ? (
-              <span className="text-body-secondary small">{user.email}</span>
+              <Link
+                to="/profile"
+                className="d-inline-flex align-items-center gap-2 text-decoration-none text-white"
+              >
+                <Avatar
+                  userId={user.id}
+                  username={user.username}
+                  avatarUrl={user.avatar_url}
+                  size="sm"
+                />
+                <span>{user.username ?? user.email}</span>
+              </Link>
             ) : null}
             <Button variant="ghost" onClick={() => setConfirmingLogout(true)}>
               Log out

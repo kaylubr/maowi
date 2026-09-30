@@ -2,13 +2,19 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 
+import {
+  USERNAME_ERROR,
+  USERNAME_MAX,
+  USERNAME_MIN,
+  isValidUsername,
+} from '../api/users'
 import { AuthAlert } from '../components/auth/AuthAlert'
 import { AuthDivider } from '../components/auth/AuthDivider'
 import { AuthLayout } from '../components/auth/AuthLayout'
 import { GoogleSignInButton } from '../components/auth/GoogleSignInButton'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
-import { Label } from '../components/ui/typography'
+import { ErrorText, Label } from '../components/ui/typography'
 import { useAuth } from '../hooks/useAuth'
 
 const MINIMUM_PASSWORD_LENGTH = 8
@@ -16,6 +22,7 @@ const MINIMUM_PASSWORD_LENGTH = 8
 export function RegisterPage() {
   const { register, isAuthenticated } = useAuth()
   const [email, setEmail] = useState('')
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
 
   if (isAuthenticated) {
@@ -24,7 +31,7 @@ export function RegisterPage() {
 
   const submit = (event: FormEvent) => {
     event.preventDefault()
-    register.mutate({ email, password })
+    register.mutate({ email, username, password })
   }
 
   return (
@@ -45,6 +52,23 @@ export function RegisterPage() {
             value={email}
             onChange={(event) => setEmail(event.target.value)}
           />
+        </div>
+
+        <div className="mb-3">
+          <Label htmlFor="username">Username</Label>
+          <Input
+            id="username"
+            type="text"
+            required
+            minLength={USERNAME_MIN}
+            maxLength={USERNAME_MAX}
+            autoComplete="username"
+            value={username}
+            onChange={(event) => setUsername(event.target.value)}
+          />
+          {username.length > 0 && !isValidUsername(username) ? (
+            <ErrorText>{USERNAME_ERROR}</ErrorText>
+          ) : null}
         </div>
 
         <div className="mb-3">

@@ -7,6 +7,8 @@ import { dashboardStub, renderApp, stubApi, stubViewport } from './helpers'
 const USER = {
   id: 1,
   email: 'student@example.com',
+  username: 'student',
+  avatar_url: null,
   created_at: '2026-01-01T00:00:00Z',
 }
 
@@ -25,7 +27,7 @@ describe('header menu on wide viewports', () => {
     stubApi([{ path: '/api/users/me', body: USER }, dashboardStub()])
     renderApp('/dashboard')
 
-    expect(await screen.findByText(USER.email)).toBeInTheDocument()
+    expect(await screen.findByText(USER.username)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Log out' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Menu' })).not.toBeInTheDocument()
   })
@@ -55,7 +57,7 @@ describe('header menu on compact viewports', () => {
     await user.click(menuButton)
 
     expect(menuButton).toHaveAttribute('aria-expanded', 'true')
-    expect(screen.getByText(USER.email)).toBeInTheDocument()
+    expect(screen.getByText(USER.username)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Log out' })).toBeInTheDocument()
 
     await user.click(menuButton)

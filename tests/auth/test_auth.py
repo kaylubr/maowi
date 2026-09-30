@@ -2,10 +2,19 @@ from fastapi.testclient import TestClient
 
 EMAIL = "student@example.com"
 PASSWORD = "correct-horse-battery"
+USERNAME = "student"
 
 
-def register(client: TestClient, email: str = EMAIL, password: str = PASSWORD):
-    return client.post("/api/auth/register", json={"email": email, "password": password})
+def register(
+    client: TestClient,
+    email: str = EMAIL,
+    password: str = PASSWORD,
+    username: str = USERNAME,
+):
+    return client.post(
+        "/api/auth/register",
+        json={"email": email, "password": password, "username": username},
+    )
 
 
 def login(client: TestClient, email: str = EMAIL, password: str = PASSWORD):
@@ -34,6 +43,22 @@ def test_register_rejects_short_password(client):
     response = register(client, password="short")
 
     assert response.status_code == 422
+
+
+def test_register_requires_a_username(client):
+    response = client.post(
+        "/api/auth/register", json={"email": EMAIL, "password": PASSWORD}
+    )
+
+    assert response.status_code == 422
+
+
+def test_register_rejects_duplicate_username(client):
+    register(client, email="first@example.com", username="student")
+
+    response = register(client, email="second@example.com", username="student")
+
+    assert response.status_code == 409
 
 
 def test_login_sets_http_only_strict_cookie(client):

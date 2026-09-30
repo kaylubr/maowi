@@ -7,7 +7,7 @@ import {
   logout as logoutRequest,
   register as registerRequest,
 } from '../api/auth'
-import type { Credentials, User } from '../api/auth'
+import type { Credentials, Registration, User } from '../api/auth'
 import { isApiError } from '../api/client'
 
 export const CURRENT_USER_QUERY_KEY = ['currentUser'] as const
@@ -32,7 +32,7 @@ export function useAuth() {
   })
 
   const registerMutation = useMutation({
-    mutationFn: async (credentials: Credentials) => {
+    mutationFn: async (credentials: Registration) => {
       await registerRequest(credentials)
       return loginRequest(credentials)
     },
@@ -58,6 +58,7 @@ export function useAuth() {
     isResolvingSession: userQuery.isPending,
     sessionError: userQuery.error,
     refetchSession: userQuery.refetch,
+    syncSession,
     login: loginMutation,
     loginWithGoogle: googleLoginMutation,
     register: registerMutation,

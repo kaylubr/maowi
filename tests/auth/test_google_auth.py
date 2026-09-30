@@ -12,9 +12,15 @@ def stub_identity(
     email: str = EMAIL,
     subject: str = "google-subject",
     email_verified: bool = True,
+    name: str | None = None,
+    picture: str | None = None,
 ) -> GoogleIdentity:
     identity = GoogleIdentity(
-        subject=subject, email=email, email_verified=email_verified
+        subject=subject,
+        email=email,
+        email_verified=email_verified,
+        name=name,
+        picture=picture,
     )
     monkeypatch.setattr(google, "verify_google_id_token", lambda credential: identity)
     return identity
@@ -26,7 +32,8 @@ def google_login(client: TestClient, credential: str = "google-credential"):
 
 def register(client: TestClient):
     return client.post(
-        "/api/auth/register", json={"email": EMAIL, "password": PASSWORD}
+        "/api/auth/register",
+        json={"email": EMAIL, "password": PASSWORD, "username": "student"},
     )
 
 
@@ -109,3 +116,25 @@ def test_password_login_rejects_google_only_account(client, monkeypatch):
     )
 
     assert response.status_code == 401
+
+
+def test_google_login_sets_avatar_and_leaves_username_empty(client, monkeypatch):
+    stub_identity(monkeypatch, picture="https://example.com/avatar-1.png")
+
+    response = google_login(client)
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["username"] is None
+    assert body["avatar_url"] == "https://example.com/avatar-1.png"
+
+
+def test_google_login_refreshes_avatar_url(client, monkeypatch):
+    stub_identity(monkeypatch, picture="https://example.com/avatar-1.png")
+    google_login(client)
+    stub_identity(monkeypatch, picture="https://example.com/avatar-2.png")
+
+    response = google_login(client)
+
+    assert response.status_code == 200
+    assert response.json()["avatar_url"] == "https://example.com/avatar-2.png"

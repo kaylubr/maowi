@@ -9,6 +9,7 @@ import { LandingPage } from './pages/LandingPage'
 import { LoginPage } from './pages/LoginPage'
 import { McqPage } from './pages/McqPage'
 import { PrivacyPage } from './pages/PrivacyPage'
+import { ProfilePage } from './pages/ProfilePage'
 import { RegisterPage } from './pages/RegisterPage'
 import { TermsPage } from './pages/TermsPage'
 
@@ -25,6 +26,10 @@ export const routes: RouteObject[] = [
       {
         path: '/dashboard',
         element: <DashboardPage />,
+      },
+      {
+        path: '/profile',
+        element: <ProfilePage />,
       },
       {
         path: '/modules/:id/mcq',
