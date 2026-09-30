@@ -3,7 +3,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     database_url: str
-    gemini_api_key: str
+    groq_api_key: str
     jwt_secret_key: str
     jwt_expire_minutes: int = 10080
     google_client_id: str

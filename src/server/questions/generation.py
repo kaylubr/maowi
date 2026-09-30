@@ -71,6 +71,7 @@ def build_prompt(parsed_text: str) -> str:
 
 def generate_questions(parsed_text: str) -> list[dict]:
     response = generate_json(build_prompt(parsed_text))
+    print(response)
     candidates = response.get("questions")
     if not isinstance(candidates, list):
         return []

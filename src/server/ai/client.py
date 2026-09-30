@@ -1,23 +1,35 @@
 import json
-from functools import lru_cache
 
-from google import genai
-from google.genai import types
-
+from groq import Groq
 from server.config import settings
 
-MODEL = "gemini-3.5-flash-lite"
+
+_model = "openai/gpt-oss-20b"
+
+_client = Groq(
+    api_key=settings.groq_api_key
+)
 
 
-@lru_cache
-def get_client() -> genai.Client:
-    return genai.Client(api_key=settings.gemini_api_key)
-
-
-def generate_json(prompt: str) -> dict:
-    response = get_client().models.generate_content(
-        model=MODEL,
-        contents=prompt,
-        config=types.GenerateContentConfig(response_mime_type="application/json"),
+def generate_json(prompt: str) -> dict: 
+    response = _client.chat.completions.create(
+        model=_model,
+        messages=[
+            {
+                "role": "user",
+                "content": prompt,
+            }
+        ],
+        response_format={
+            "type": "json_object"
+        },
+        reasoning_effort="low"
     )
-    return json.loads(response.text)
+
+    content = response.choices[0].message.content
+
+    if not content:
+        raise RuntimeError("Returned an empty response")
+
+
+    return json.loads(content)
