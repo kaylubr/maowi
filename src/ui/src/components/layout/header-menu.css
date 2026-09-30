@@ -1,6 +1,24 @@
+.app-navbar {
+  padding-block: 0.9rem;
+}
+
 .header-menu-panel {
   max-height: calc(100dvh - 5rem);
   max-width: calc(100vw - 2rem);
   overflow-wrap: anywhere;
   overflow-y: auto;
+}
+
+.app-nav-link {
+  color: var(--brand-accent-on-dark);
+  font-size: 0.875rem;
+  text-decoration: none;
+}
+
+.app-nav-link:hover {
+  text-decoration: underline;
+}
+
+.profile-menu-panel {
+  min-width: 10rem;
 }

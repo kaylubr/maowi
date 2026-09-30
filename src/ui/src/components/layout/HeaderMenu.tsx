@@ -1,6 +1,7 @@
-import { useEffect, useId, useRef, useState } from 'react'
+import { useCallback, useId, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 
+import { useDismissable } from '../../hooks/useDismissable'
 import { useMediaQuery } from '../../hooks/useMediaQuery'
 
 export const COMPACT_NAV_QUERY = '(max-width: 767.98px)'
@@ -36,32 +37,8 @@ function CompactHeaderMenu({ children, trailing, className = '', panelClassName 
   const containerRef = useRef<HTMLDivElement>(null)
   const panelId = useId()
 
-  useEffect(() => {
-    if (!open) {
-      return
-    }
-
-    const handlePointerDown = (event: PointerEvent) => {
-      if (containerRef.current?.contains(event.target as Node)) {
-        return
-      }
-      setOpen(false)
-    }
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setOpen(false)
-      }
-    }
-
-    document.addEventListener('pointerdown', handlePointerDown)
-    document.addEventListener('keydown', handleKeyDown)
-
-    return () => {
-      document.removeEventListener('pointerdown', handlePointerDown)
-      document.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [open])
+  const close = useCallback(() => setOpen(false), [])
+  useDismissable(open, containerRef, close)
 
   return (
     <div ref={containerRef} className="d-flex align-items-center gap-2 position-relative">

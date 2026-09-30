@@ -22,16 +22,37 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-describe('header menu on wide viewports', () => {
-  it('keeps the navbar controls inline with no menu button', async () => {
+describe('app navbar', () => {
+  it('shows the dashboard link and account menu, with no hamburger or standalone log out', async () => {
     stubApi([{ path: '/api/users/me', body: USER }, dashboardStub()])
     renderApp('/dashboard')
 
-    expect(await screen.findByText(USER.username)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Log out' })).toBeInTheDocument()
+    expect(
+      await screen.findByRole('button', { name: 'Account menu' }),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Dashboard' })).toHaveAttribute(
+      'href',
+      '/dashboard',
+    )
     expect(screen.queryByRole('button', { name: 'Menu' })).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Log out' }),
+    ).not.toBeInTheDocument()
   })
 
+  it('keeps the account menu on compact viewports', async () => {
+    stubViewport(true)
+    stubApi([{ path: '/api/users/me', body: USER }, dashboardStub()])
+    renderApp('/dashboard')
+
+    expect(
+      await screen.findByRole('button', { name: 'Account menu' }),
+    ).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Menu' })).not.toBeInTheDocument()
+  })
+})
+
+describe('landing header menu', () => {
   it('keeps the landing links inline with no menu button', () => {
     stubApi([])
     renderApp('/')
@@ -40,61 +61,58 @@ describe('header menu on wide viewports', () => {
     expect(screen.getByRole('link', { name: 'Get started' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Menu' })).not.toBeInTheDocument()
   })
-})
 
-describe('header menu on compact viewports', () => {
-  it('collapses the navbar controls behind the menu button', async () => {
+  it('collapses the landing links behind the menu button', async () => {
     const user = userEvent.setup()
     stubViewport(true)
-    stubApi([{ path: '/api/users/me', body: USER }, dashboardStub()])
-    renderApp('/dashboard')
+    stubApi([])
+    renderApp('/')
 
-    const menuButton = await screen.findByRole('button', { name: 'Menu' })
+    const menuButton = screen.getByRole('button', { name: 'Menu' })
     expect(menuButton).toHaveAttribute('aria-expanded', 'false')
-    expect(screen.queryByText(USER.email)).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Log out' })).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('link', { name: 'Get started' }),
+    ).not.toBeInTheDocument()
 
     await user.click(menuButton)
 
     expect(menuButton).toHaveAttribute('aria-expanded', 'true')
-    expect(screen.getByText(USER.username)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Log out' })).toBeInTheDocument()
-
-    await user.click(menuButton)
-
-    expect(menuButton).toHaveAttribute('aria-expanded', 'false')
-    expect(screen.queryByRole('button', { name: 'Log out' })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Get started' })).toBeInTheDocument()
   })
 
-  it('closes the menu when Escape is pressed', async () => {
+  it('closes the landing menu when Escape is pressed', async () => {
     const user = userEvent.setup()
     stubViewport(true)
-    stubApi([{ path: '/api/users/me', body: USER }, dashboardStub()])
-    renderApp('/dashboard')
+    stubApi([])
+    renderApp('/')
 
-    await user.click(await screen.findByRole('button', { name: 'Menu' }))
-    expect(screen.getByRole('button', { name: 'Log out' })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Menu' }))
+    expect(screen.getByRole('link', { name: 'Get started' })).toBeInTheDocument()
 
     await user.keyboard('{Escape}')
 
-    expect(screen.queryByRole('button', { name: 'Log out' })).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('link', { name: 'Get started' }),
+    ).not.toBeInTheDocument()
   })
 
-  it('closes the menu when the pointer presses outside', async () => {
+  it('closes the landing menu when the pointer presses outside', async () => {
     const user = userEvent.setup()
     stubViewport(true)
-    stubApi([{ path: '/api/users/me', body: USER }, dashboardStub()])
-    renderApp('/dashboard')
+    stubApi([])
+    renderApp('/')
 
-    await user.click(await screen.findByRole('button', { name: 'Menu' }))
-    expect(screen.getByRole('button', { name: 'Log out' })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Menu' }))
+    expect(screen.getByRole('link', { name: 'Get started' })).toBeInTheDocument()
 
     await user.click(document.body)
 
-    expect(screen.queryByRole('button', { name: 'Log out' })).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('link', { name: 'Get started' }),
+    ).not.toBeInTheDocument()
   })
 
-  it('shows the landing links in the menu and navigates from them', async () => {
+  it('navigates from the landing menu links', async () => {
     const user = userEvent.setup()
     stubViewport(true)
     const api = stubApi([])
@@ -103,8 +121,6 @@ describe('header menu on compact viewports', () => {
     await user.click(screen.getByRole('button', { name: 'Menu' }))
 
     const logIn = screen.getByRole('link', { name: 'Log in' })
-    expect(logIn).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Get started' })).toBeInTheDocument()
 
     api.replace([UNAUTHENTICATED])
     await user.click(logIn)

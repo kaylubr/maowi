@@ -1,35 +1,58 @@
 import { useCallback, useEffect, useSyncExternalStore } from 'react'
 
-import type { Theme } from '../theme'
+import type { Theme, ThemePreference } from '../theme'
 import {
   applyTheme,
+  clearStoredTheme,
+  readStoredPreference,
   readStoredTheme,
-  resolveTheme,
   systemTheme,
   writeStoredTheme,
 } from '../theme'
 
+type ThemeSnapshot = {
+  preference: ThemePreference
+  theme: Theme
+}
+
 const listeners = new Set<() => void>()
-let current: Theme | null = null
+let currentPreference: ThemePreference | null = null
+let snapshot: ThemeSnapshot | null = null
 
-function getSnapshot(): Theme {
-  if (current === null) {
-    current = resolveTheme()
+function resolveTheme(preference: ThemePreference): Theme {
+  return preference === 'system' ? systemTheme() : preference
+}
+
+function getSnapshot(): ThemeSnapshot {
+  if (snapshot === null) {
+    const preference = currentPreference ?? readStoredPreference()
+    snapshot = { preference, theme: resolveTheme(preference) }
   }
-  return current
+  return snapshot
 }
 
-function getServerSnapshot(): Theme {
-  return 'light'
+function getServerSnapshot(): ThemeSnapshot {
+  return { preference: 'system', theme: 'light' }
 }
 
-function setTheme(next: Theme): void {
-  current = next
-  applyTheme(next)
-  writeStoredTheme(next)
+function emit(): void {
+  snapshot = null
   for (const listener of listeners) {
     listener()
   }
+}
+
+function setPreference(next: ThemePreference): void {
+  currentPreference = next
+
+  if (next === 'system') {
+    clearStoredTheme()
+  } else {
+    writeStoredTheme(next)
+  }
+
+  applyTheme(resolveTheme(next))
+  emit()
 }
 
 function subscribe(listener: () => void): () => void {
@@ -44,7 +67,8 @@ function subscribe(listener: () => void): () => void {
     if (readStoredTheme() !== null) {
       return
     }
-    setTheme(systemTheme())
+    applyTheme(systemTheme())
+    emit()
   }
 
   media?.addEventListener('change', followSystem)
@@ -56,15 +80,19 @@ function subscribe(listener: () => void): () => void {
 }
 
 export function useTheme() {
-  const theme = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
+  const { preference, theme } = useSyncExternalStore(
+    subscribe,
+    getSnapshot,
+    getServerSnapshot,
+  )
 
   useEffect(() => {
     applyTheme(theme)
   }, [theme])
 
   const toggleTheme = useCallback(() => {
-    setTheme(getSnapshot() === 'dark' ? 'light' : 'dark')
+    setPreference(getSnapshot().theme === 'dark' ? 'light' : 'dark')
   }, [])
 
-  return { theme, setTheme, toggleTheme }
+  return { theme, preference, setPreference, toggleTheme }
 }

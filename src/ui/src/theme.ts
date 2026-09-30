@@ -1,5 +1,7 @@
 export type Theme = 'light' | 'dark'
 
+export type ThemePreference = 'system' | Theme
+
 export const THEME_STORAGE_KEY = 'maowi-theme'
 
 export function readStoredTheme(): Theme | null {
@@ -18,13 +20,21 @@ export function systemTheme(): Theme {
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
 }
 
-export function resolveTheme(): Theme {
-  return readStoredTheme() ?? systemTheme()
+export function readStoredPreference(): ThemePreference {
+  return readStoredTheme() ?? 'system'
 }
 
 export function writeStoredTheme(theme: Theme): void {
   try {
     window.localStorage.setItem(THEME_STORAGE_KEY, theme)
+  } catch {
+    return
+  }
+}
+
+export function clearStoredTheme(): void {
+  try {
+    window.localStorage.removeItem(THEME_STORAGE_KEY)
   } catch {
     return
   }

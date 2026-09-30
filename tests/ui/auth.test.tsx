@@ -39,7 +39,9 @@ describe('protected routes', () => {
     renderApp('/dashboard')
 
     expect(await screen.findByText('Your modules')).toBeInTheDocument()
-    expect(screen.getByText(USER.username)).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Account menu' }),
+    ).toBeInTheDocument()
   })
 
   it('surfaces a server error instead of redirecting', async () => {
@@ -132,7 +134,8 @@ describe('logout', () => {
     const { router } = renderApp('/dashboard')
 
     await screen.findByText('Your modules')
-    await user.click(screen.getByRole('button', { name: 'Log out' }))
+    await user.click(screen.getByRole('button', { name: 'Account menu' }))
+    await user.click(screen.getByRole('button', { name: 'Logout' }))
 
     expect(await screen.findByRole('dialog', { name: 'Log out' })).toBeInTheDocument()
 
@@ -156,7 +159,8 @@ describe('logout', () => {
     renderApp('/dashboard')
 
     await screen.findByText('Your modules')
-    await user.click(screen.getByRole('button', { name: 'Log out' }))
+    await user.click(screen.getByRole('button', { name: 'Account menu' }))
+    await user.click(screen.getByRole('button', { name: 'Logout' }))
     await user.click(screen.getByRole('button', { name: 'Cancel' }))
 
     await waitFor(() =>

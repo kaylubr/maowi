@@ -13,6 +13,7 @@ import { ModulePage } from './pages/ModulePage'
 import { PrivacyPage } from './pages/PrivacyPage'
 import { ProfilePage } from './pages/ProfilePage'
 import { RegisterPage } from './pages/RegisterPage'
+import { SettingsPage } from './pages/SettingsPage'
 import { TermsPage } from './pages/TermsPage'
 
 export const routes: RouteObject[] = [
@@ -33,6 +34,10 @@ export const routes: RouteObject[] = [
       {
         path: '/profile',
         element: <ProfilePage />,
+      },
+      {
+        path: '/settings',
+        element: <SettingsPage />,
       },
       {
         path: '/modules/:id',

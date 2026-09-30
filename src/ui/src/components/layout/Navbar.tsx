@@ -1,19 +1,14 @@
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 
 import { useAuth } from '../../hooks/useAuth'
-import { Avatar } from '../ui/Avatar'
-import { Button } from '../ui/Button'
 import { ConfirmModal } from '../ui/ConfirmModal'
 import { Logo } from '../ui/Logo'
-import { ThemeToggle } from '../ui/ThemeToggle'
-import { HeaderMenu } from './HeaderMenu'
+import { ProfileMenu } from './ProfileMenu'
 
 export function Navbar() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
-  const { pathname } = useLocation()
-  const isDashboard = pathname === '/dashboard'
   const [confirmingLogout, setConfirmingLogout] = useState(false)
 
   const confirmLogout = async () => {
@@ -24,35 +19,23 @@ export function Navbar() {
 
   return (
     <header data-bs-theme="dark" className="bg-dark text-white position-relative">
-      <nav className="navbar">
+      <nav className="navbar app-navbar">
         <div className="container">
           <Link to="/dashboard" className="navbar-brand">
             <Logo />
           </Link>
 
-          <HeaderMenu
-            className="text-white"
-            panelClassName="bg-dark border-secondary-subtle"
-            trailing={isDashboard ? <ThemeToggle /> : null}
-          >
-            {user ? (
-              <Link
-                to="/profile"
-                className="d-inline-flex align-items-center gap-2 text-decoration-none text-white"
-              >
-                <Avatar
-                  userId={user.id}
-                  username={user.username}
-                  avatarUrl={user.avatar_url}
-                  size="sm"
-                />
-                <span>{user.username ?? user.email}</span>
+          {user ? (
+            <div className="d-flex align-items-center gap-3">
+              <Link to="/dashboard" className="app-nav-link">
+                Dashboard
               </Link>
-            ) : null}
-            <Button variant="ghost" onClick={() => setConfirmingLogout(true)}>
-              Log out
-            </Button>
-          </HeaderMenu>
+              <ProfileMenu
+                user={user}
+                onLogout={() => setConfirmingLogout(true)}
+              />
+            </div>
+          ) : null}
         </div>
       </nav>
 
