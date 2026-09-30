@@ -52,8 +52,7 @@
   }
 
   .brand-lift:hover {
-    box-shadow: 0 0.5rem 1.25rem rgba(0, 0, 0, 0.12);
-    transform: translateY(-2px);
+    cursor: pointer;
   }
 }
 

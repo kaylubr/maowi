@@ -39,11 +39,12 @@ export function ModuleCard({ module, onStudy, onDelete }: ModuleCardProps) {
           </p>
         </div>
 
-        <div className="card-footer bg-transparent d-flex flex-wrap gap-2">
+        <div className="card-footer bg-transparent py-3">
           {onStudy ? (
             <Button
               aria-label={`Study ${module.name}`}
               onClick={() => onStudy(module)}
+              className='w-100'
             >
               Study
             </Button>
