@@ -1,11 +1,9 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 
 from server.attempts.router import router as attempts_router
 from server.auth.router import router as auth_router
-from server.config import settings
 from server.dashboard.router import router as dashboard_router
 from server.members.router import router as members_router
 from server.modules.router import router as modules_router
@@ -21,14 +19,6 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Maowi API", lifespan=lifespan)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[settings.frontend_origin],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 app.include_router(auth_router)
 app.include_router(users_router)
