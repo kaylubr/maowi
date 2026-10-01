@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "concurrently": "^10.0.5"
+  },
+  "scripts": {
+    "dev": "concurrently -k -n core,web -c blue,magenta \"npm:dev:core\" \"npm:dev:web\""
+  }
+}
