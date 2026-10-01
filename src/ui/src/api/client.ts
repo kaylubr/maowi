@@ -1,5 +1,3 @@
-import { config } from '../config'
-
 export class ApiError extends Error {
   readonly status: number
   readonly body: unknown
@@ -62,7 +60,7 @@ export async function apiFetch<T>(
   path: string,
   options: RequestInit = {},
 ): Promise<T> {
-  const response = await fetch(`${config.apiBaseUrl}${path}`, {
+  const response = await fetch(`${path}`, {
     ...options,
     credentials: 'include',
     headers: buildHeaders(options),

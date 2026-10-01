@@ -3,11 +3,11 @@ import { render } from '@testing-library/react'
 import { RouterProvider, createMemoryRouter } from 'react-router-dom'
 import { vi } from 'vitest'
 
-import type { DashboardSummary, ModuleSummary } from '../../src/ui/src/api/dashboard'
-import type { StudyModule } from '../../src/ui/src/api/modules'
-import { config } from '../../src/ui/src/config'
-import { COMPACT_NAV_QUERY } from '../../src/ui/src/components/layout/HeaderMenu'
-import { routes } from '../../src/ui/src/routes'
+import type { DashboardSummary, ModuleSummary } from '../src/api/dashboard'
+import type { StudyModule } from '../src/api/modules'
+import { config } from '../src/config'
+import { COMPACT_NAV_QUERY } from '../src/components/layout/HeaderMenu'
+import { routes } from '../src/routes'
 
 export type StubResponse = {
   method?: string
@@ -34,25 +34,50 @@ export function stubApi(responses: StubResponse[]) {
   const calls: string[] = []
   const requests: RecordedRequest[] = []
 
-  const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-    const path = String(input).slice(config.apiBaseUrl.length)
-    const method = (init?.method ?? 'GET').toUpperCase()
-    calls.push(`${method} ${path}`)
-    requests.push({ method, path, body: init?.body })
+  const fetchMock = vi.fn(
+    async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url =
+        input instanceof Request
+          ? new URL(input.url)
+          : input instanceof URL
+            ? input
+            : new URL(input, window.location.origin)
 
-    const match = stubs.find(
-      (stub) => stub.path === path && (stub.method ?? 'GET').toUpperCase() === method,
-    )
+      const path = `${url.pathname}${url.search}`
 
-    if (!match) {
-      return jsonResponse({ detail: `No stub for ${method} ${path}` }, 500)
+      const method = (
+        init?.method ??
+        (input instanceof Request ? input.method : 'GET')
+      ).toUpperCase()
+
+      calls.push(`${method} ${path}`)
+
+      requests.push({
+        method,
+        path,
+        body: init?.body
+      })
+
+      const match = stubs.find(
+        (stub) =>
+          stub.path === path &&
+          (stub.method ?? 'GET').toUpperCase() === method
+      )
+
+      if (!match) {
+        return jsonResponse(
+          { detail: `No stub for ${method} ${path}` },
+          500
+        )
+      }
+
+      const status = match.status ?? 200
+
+      return status === 204
+        ? new Response(null, { status })
+        : jsonResponse(match.body ?? {}, status)
     }
-
-    const status = match.status ?? 200
-    return status === 204
-      ? new Response(null, { status })
-      : jsonResponse(match.body ?? {}, status)
-  })
+  )
 
   vi.stubGlobal('fetch', fetchMock)
 
@@ -62,7 +87,7 @@ export function stubApi(responses: StubResponse[]) {
     requests,
     replace(next: StubResponse[]) {
       stubs.splice(0, stubs.length, ...next)
-    },
+    }
   }
 }
 

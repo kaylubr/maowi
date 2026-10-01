@@ -2,8 +2,8 @@ import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import type { ModuleSummary } from '../../src/ui/src/api/dashboard'
-import type { ModuleCreation } from '../../src/ui/src/api/modules'
+import type { ModuleSummary } from '../src/api/dashboard'
+import type { ModuleCreation } from '../src/api/modules'
 import { dashboardStub, moduleSummary, renderApp, stubApi } from './helpers'
 import type { StubResponse } from './helpers'
 

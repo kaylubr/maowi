@@ -2,7 +2,7 @@
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="src/ui/public/maowi.svg">
     <source media="(prefers-color-scheme: light)" srcset="docs/assets/maowi-on-light.svg">
-    <img alt="Maowi" src="docs/assets/maowi-on-light.svg" height="70">
+    <img alt="Maowi" src="src/ui/assets/maowi-on-light.svg" height="70">
   </picture>
 </p>
 

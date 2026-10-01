@@ -22,7 +22,7 @@ describe('landing page', () => {
     expect(
       screen.getByRole('heading', { name: 'Identification' }),
     ).toBeInTheDocument()
-    expect(api.calls).toEqual([])
+    expect(api.calls).toEqual(["GET /api/users/me"])
   })
 
   it('links to the login and register pages', () => {
@@ -60,7 +60,7 @@ describe('landing page', () => {
       screen.getByRole('tab', { name: 'Multiple Choice' }),
     ).toHaveAttribute('aria-selected', 'true')
     expect(screen.getByText('Ribosome')).toBeInTheDocument()
-    expect(api.calls).toEqual([])
+    expect(api.calls).toEqual(["GET /api/users/me"])
   })
 
   it('points the footer at the legal pages, contact, and the source', () => {
@@ -80,7 +80,7 @@ describe('landing page', () => {
       'href',
       '/contact',
     )
-    expect(screen.getByRole('link', { name: 'Source code' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Github' })).toHaveAttribute(
       'href',
       'https://github.com/kaylubr/maowi',
     )

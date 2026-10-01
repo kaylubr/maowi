@@ -7,7 +7,7 @@ from server.attempts.models import AttemptMode
 from server.members import service as members_service
 from server.modules.models import Module
 from server.users import service as users_service
-from tests.fixtures import build_docx
+from server.tests.fixtures import build_docx
 
 PASSWORD = "correct-horse-battery"
 CREATIONS_PATH = "/api/modules/creations"

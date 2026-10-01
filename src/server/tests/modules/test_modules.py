@@ -9,7 +9,7 @@ from server.modules import service as modules_service
 from server.modules.models import Module, ModuleCreation
 from server.questions import service as questions_service
 from server.questions.models import Question
-from tests.fixtures import build_docx
+from server.tests.fixtures import build_docx
 
 GENERATED_QUESTION = {
     "prompt": "What is the capital of Australia?",

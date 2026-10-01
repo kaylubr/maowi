@@ -1,7 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { ApiError, apiFetch } from '../../src/ui/src/api/client'
-import { config } from '../../src/ui/src/config'
+import { ApiError, apiFetch } from '../src/api/client'
 
 function mockFetch(response: Response) {
   const fetchMock = vi.fn().mockResolvedValue(response)
@@ -26,9 +25,8 @@ describe('apiFetch', () => {
 
     await apiFetch('/api/users/me')
 
-    expect(config.apiBaseUrl).toBe('http://localhost:8000')
     expect(fetchMock).toHaveBeenCalledWith(
-      `${config.apiBaseUrl}/api/users/me`,
+      '/api/users/me',
       expect.objectContaining({ credentials: 'include' }),
     )
   })
@@ -87,7 +85,7 @@ describe('apiFetch', () => {
 
     const error = await apiFetch('/api/auth/login').catch(
       (thrown: unknown) => thrown as ApiError,
-    )
+    ) as ApiError
 
     expect(error.message).toBe('Invalid email or password')
   })
@@ -97,7 +95,7 @@ describe('apiFetch', () => {
 
     const error = await apiFetch('/api/users/me').catch(
       (thrown: unknown) => thrown as ApiError,
-    )
+    ) as ApiError
 
     expect(error.status).toBe(401)
   })
