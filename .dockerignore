@@ -1,0 +1,8 @@
+**/.venv
+**/node_modules
+**/__pycache__
+**/dist
+.git
+.env
+.env.*
+docker-compose*.yml
