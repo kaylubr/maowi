@@ -57,7 +57,7 @@
 
 .auth-google-control {
   inset: 0;
-  opacity: 0;
+  opacity: 0.01;
   overflow: hidden;
   position: absolute;
   z-index: 1;

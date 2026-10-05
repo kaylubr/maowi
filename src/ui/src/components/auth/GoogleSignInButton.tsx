@@ -31,9 +31,12 @@ declare global {
   }
 }
 
+let googleInitialized = false
+
 export function GoogleSignInButton() {
   const { loginWithGoogle } = useAuth()
-  const signInWithGoogle = loginWithGoogle.mutate
+  const signInRef = useRef(loginWithGoogle.mutate)
+  signInRef.current = loginWithGoogle.mutate
   const containerRef = useRef<HTMLDivElement>(null)
   const renderedWidthRef = useRef<number | null>(null)
 
@@ -49,17 +52,22 @@ export function GoogleSignInButton() {
         return
       }
 
-      const width = container.clientWidth
+      if (!googleInitialized) {
+        services.accounts.id.initialize({
+          client_id: config.googleClientId,
+          callback: (response) => signInRef.current(response.credential),
+        })
+        googleInitialized = true
+      }
+
+      // Google caps the button at 400px wide.
+      const width = Math.min(container.clientWidth, 400)
       if (renderedWidthRef.current === width) {
         return
       }
       renderedWidthRef.current = width
 
       container.replaceChildren()
-      services.accounts.id.initialize({
-        client_id: config.googleClientId,
-        callback: (response) => signInWithGoogle(response.credential),
-      })
       services.accounts.id.renderButton(container, {
         type: 'standard',
         theme: 'outline',
@@ -69,16 +77,20 @@ export function GoogleSignInButton() {
       })
     }
 
-    let script: HTMLScriptElement | null = null
+    let script = document.querySelector<HTMLScriptElement>(
+      `script[src="${GOOGLE_SCRIPT_SRC}"]`,
+    )
     if (window.google !== undefined) {
       render()
     } else {
-      script = document.createElement('script')
-      script.src = GOOGLE_SCRIPT_SRC
-      script.async = true
-      script.defer = true
+      if (script === null) {
+        script = document.createElement('script')
+        script.src = GOOGLE_SCRIPT_SRC
+        script.async = true
+        script.defer = true
+        document.head.appendChild(script)
+      }
       script.addEventListener('load', render)
-      document.head.appendChild(script)
     }
 
     const observer =
@@ -91,7 +103,7 @@ export function GoogleSignInButton() {
       observer?.disconnect()
       script?.removeEventListener('load', render)
     }
-  }, [signInWithGoogle])
+  }, [])
 
   return (
     <div className="auth-google">
